@@ -86,12 +86,15 @@
       +이어서 질문하기), CRUD(추가/수정/삭제) 왕복 확인, 콘솔 에러/네트워크 실패 0건
 
 ### Phase 9. 프론트엔드 배포 + 통합 검증
-- [ ] 9.1 GitHub push
-- [ ] 9.2 Vercel 배포 (Root Directory=`frontend`, Other preset)
-- [ ] 9.3 `frontend/js/config.js`의 `API_BASE_URL`을 Render 배포 URL로 변경 후 커밋·재배포
-- [ ] 9.4 Render `ALLOWED_ORIGINS`를 Vercel 도메인으로 좁히기
-- [ ] 9.5 PRD 37번 검증 기준 전체 재확인 (배포 URL 기준)
-- [ ] 9.6 README.md 작성 + 스크린샷 3종 촬영
+- [x] 9.1 GitHub push
+- [ ] 9.2 Vercel 배포 (Root Directory=`frontend`, Other preset) — 사용자가 대시보드에서 직접 진행
+- [x] 9.3 `frontend/js/config.js`의 `API_BASE_URL`을 Render 배포 URL로 변경 후 커밋·재배포
+- [ ] 9.4 Render `ALLOWED_ORIGINS`를 Vercel 도메인으로 좁히기 — 사용자가 대시보드에서 직접 진행
+- [x] 9.5 PRD 37번 검증 기준 전체 재확인 (배포 URL 기준) — 32개 중 31개 PASS, 보안검증 5번은
+      9.6(README/스크린샷) 완료 후 재확인해서 PASS로 전환. 실패 항목 없음.
+- [x] 9.6 README.md 작성 + 스크린샷 3종 촬영 — `docs/screenshots/`에 저장, 실제 배포된
+      Vercel URL에서 Playwright로 캡처(채팅 Q&A / 거래 추가 / 대화 기록 불러오기), 캡처 후
+      테스트 거래·대화는 정리. README/스크린샷에 실명·계좌번호 등 노출 없음 확인.
 
 ### Phase 10. 보너스 — 범위 밖 (별도 Task.md-v2)
 - [ ] 10.0 Phase 1~9 배포 안정화 확인 후 별도 시나리오/PRD 보강 → 새 Task 작성

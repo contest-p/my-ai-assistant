@@ -58,7 +58,12 @@
   월별 막대그래프는 API가 월별 세부 데이터를 안 줘서 제거(trend 배지만 유지, 사용자
   확인 완료). Playwright 헤드리스 브라우저로 4개 화면 실데이터 동작 + CRUD 왕복 +
   콘솔/네트워크 에러 0건 확인.
-- Phase 9부터는 아직 시작 전.
+- Phase 9(프론트엔드 배포 + 통합 검증): 9.1(GitHub push)·9.3(config.js를 Render 실주소로
+  변경)·9.5(PRD 37번 32개 항목 배포 URL 기준 재확인)·9.6(README.md + 스크린샷 3종) 완료.
+  9.2(Vercel 배포)·9.4(Render ALLOWED_ORIGINS 좁히기)는 사용자가 대시보드에서 직접 진행—
+  Vercel 배포 URL: https://my-ai-assistant-weld.vercel.app. 9.5 검증 결과 32개 중 31개
+  PASS, 나머지 1개(README/스크린샷 개인정보 미노출)는 9.6 완료 후 재확인해서 PASS로 전환
+  — 실패 항목 없음. 사실상 핵심 미션(Phase 1~9) 기능 요구사항 충족.
 
 ## 개발 순서
 
