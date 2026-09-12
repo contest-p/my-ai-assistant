@@ -47,7 +47,18 @@
 - Phase 4(Trend 계산): 완료. Phase 3의 summary가 trend를 필요로 해서 같이 구현됨.
 - Phase 5(대화 기록 API): 완료.
 - Phase 6(AI 챗봇 API): 완료. 모델 `gpt-5.5` 확정.
-- Phase 7(Render 배포)부터 진행 예정.
+- Phase 7(Render 배포): 7.1(requirements.txt pip freeze 고정)·7.2(민감정보 커밋 이력
+  없음 확인) 완료. 7.3/7.4(Render 대시보드 서비스 생성·환경변수 등록)는 사용자가 직접
+  진행 완료(배포 URL: https://my-ai-assistant-bogq.onrender.com). 7.5는 미확인.
+- Phase 8(프론트엔드 개발): 전부 완료. `frontend/js/config.js`(API_BASE_URL)·`api.js`
+  (fetch 래퍼)를 추가하고 4개 화면(채팅/대화 기록/데이터 요약/거래 내역)을 목업에서
+  실제 API 연동으로 교체. `POST /api/conversations`는 채팅 흐름에서 호출하지 않음(자동
+  저장과 중복 방지 재확인). 사이드바 D+n 카운터는 `new Date()` 기준 실시간 계산으로
+  변경, 콜드스타트 안내 문구는 실측(~43초) 반영해 "최대 1분" 표현으로 조정. 요약 화면의
+  월별 막대그래프는 API가 월별 세부 데이터를 안 줘서 제거(trend 배지만 유지, 사용자
+  확인 완료). Playwright 헤드리스 브라우저로 4개 화면 실데이터 동작 + CRUD 왕복 +
+  콘솔/네트워크 에러 0건 확인.
+- Phase 9부터는 아직 시작 전.
 
 ## 개발 순서
 

@@ -232,7 +232,7 @@ button, input, select { font-family: inherit; font-size: inherit; }
   margin: 0 0 6px;
 }
 
-.view-header .sub {
+.sub {
   color: var(--muted);
   font-size: 13.5px;
   margin: 0;
@@ -300,6 +300,7 @@ button, input, select { font-family: inherit; font-size: inherit; }
 }
 
 .hero-card .hero-number.positive { color: #D7DBAE; }
+.hero-card .hero-number.negative { color: #E3A99B; }
 .hero-card .hero-sub {
   font-size: 13.5px;
   color: #C4C9D6;
@@ -390,6 +391,7 @@ button, input, select { font-family: inherit; font-size: inherit; }
 }
 .trend-badge.up { background: var(--brick-soft); color: var(--brick); }
 .trend-badge.down { background: var(--khaki-soft); color: var(--khaki-deep); }
+.trend-badge:not(.up):not(.down) { background: var(--khaki-soft); color: var(--muted); }
 
 .bar-chart {
   display: flex;
@@ -468,6 +470,12 @@ button, input, select { font-family: inherit; font-size: inherit; }
   background: var(--paper);
   border: 1px solid var(--line);
   border-bottom-left-radius: 2px;
+}
+
+.msg.ai .bubble.error-bubble {
+  border-color: var(--brick-soft);
+  background: var(--brick-soft);
+  color: var(--brick);
 }
 
 .msg.ai .bubble .figures {
@@ -579,6 +587,12 @@ button, input, select { font-family: inherit; font-size: inherit; }
 
 .convo-detail .line { font-size: 13px; }
 .convo-detail .line b { color: var(--navy); }
+
+.convo-detail .continue-btn {
+  margin-top: 10px;
+  padding: 7px 12px;
+  font-size: 12.5px;
+}
 
 /* ---------- data view (table) ---------- */
 

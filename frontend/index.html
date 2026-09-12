@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>전역 후 1년 — 내 소비를 아는 AI 비서 (목업)</title>
+<title>전역 후 1년 — 내 소비를 아는 AI 비서</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -13,7 +13,7 @@
   <!-- ================= 사이드바 ================= -->
   <aside class="sidebar">
     <div class="brand">
-      <span class="badge">MOCKUP · v0.1</span>
+      <span class="badge">v1.0</span>
       <h1>전역 후 1년,<br>내 소비를 아는 AI 비서</h1>
       <p>2025.08.18 — 2026.08.18</p>
     </div>
@@ -56,10 +56,10 @@
 
     <div class="sidebar-footer">
       <div class="day-counter">
-        <strong id="dayCounter">D+365</strong>
+        <strong id="dayCounter">D+0</strong>
         전역 후 경과일
       </div>
-      <div class="since">기준일 2026.08.18</div>
+      <div class="since" id="sinceDate"></div>
     </div>
   </aside>
 
@@ -81,44 +81,12 @@
           <h2>AI 채팅</h2>
           <p class="sub">저장된 데이터 요약을 바탕으로 답변합니다 · 매 질문마다 최신 데이터를 다시 반영해요</p>
         </div>
-        <button class="btn secondary">+ 새 대화</button>
-      </div>
-
-      <div class="demo-toolbar">
-        <button class="btn ghost" id="btnDemoLoading">▸ 로딩 상태 미리보기</button>
-        <button class="btn ghost" id="btnDemoColdstart">▸ 콜드스타트 안내 미리보기</button>
+        <button class="btn secondary" id="btnNewChat">+ 새 대화</button>
       </div>
 
       <div class="chat-shell">
         <div class="coldstart-note" id="coldstartNote">서버를 깨우는 중이에요. 잠시만 기다려 주세요 (최대 1분 정도 걸릴 수 있어요).</div>
         <div class="chat-log" id="chatLog">
-
-          <div class="msg user"><div class="bubble">전역하고 나서 지금까지 총 얼마 썼어?</div></div>
-          <div class="msg ai">
-            <div class="bubble">
-              전역일인 2025년 8월 18일부터 지금까지 총 <b>30,243,572원</b>을 썼어요.
-              같은 기간 입금은 30,470,405원이라, 전체적으로는 226,833원 정도 플러스예요.
-              <span class="figures">total_expense · net 기준 답변</span>
-            </div>
-          </div>
-
-          <div class="msg user"><div class="bubble">이번 달은 어때?</div></div>
-          <div class="msg ai">
-            <div class="bubble">
-              8월(이번 달)은 지금까지 지출 1,868,120원, 수입 1,703,286원으로 순증감 −164,834원이에요.
-              최근 3개월 평균으로 보면 지출이 늘어나는 추세라, 이번 달도 그 흐름 안에 있는 편이에요.
-              <span class="figures">current_month · trend 기준 답변</span>
-            </div>
-          </div>
-
-          <div class="msg user"><div class="bubble">체크카드로 제일 많이 나간 게 뭐야?</div></div>
-          <div class="msg ai">
-            <div class="bubble">
-              카드결제 카테고리가 총 601건, 약 21,345,000원으로 제일 커요. 다음은 계좌이체(약 8,000,000원)예요.
-              <span class="figures">get_category_expense 도구 호출 (보너스)</span>
-            </div>
-          </div>
-
           <div class="msg ai" id="typingMsg" style="display:none;">
             <div class="bubble typing-bubble"><span></span><span></span><span></span></div>
           </div>
@@ -140,47 +108,7 @@
         </div>
       </div>
 
-      <div class="convo-list" id="convoList">
-
-        <article class="convo-card">
-          <div class="row1">
-            <span class="title">이번 달 지출 분석</span>
-            <span class="meta">2026.09.08 · 6개 메시지 <span class="chevron">▸</span></span>
-          </div>
-          <div class="preview">전역하고 나서 지금까지 총 얼마 썼어? → 지금까지 총 30,243,572원을 썼어요…</div>
-          <div class="convo-detail">
-            <div class="line"><b>나</b> · 전역하고 나서 지금까지 총 얼마 썼어?</div>
-            <div class="line"><b>AI</b> · 총 30,243,572원을 썼고, 입금은 30,470,405원이라 순증감은 +226,833원이에요.</div>
-            <div class="line"><b>나</b> · 이번 달은 어때?</div>
-            <div class="line"><b>AI</b> · 8월은 지출 1,868,120원, 수입 1,703,286원, 순증감 −164,834원이에요.</div>
-          </div>
-        </article>
-
-        <article class="convo-card">
-          <div class="row1">
-            <span class="title">카드 지출이 궁금해</span>
-            <span class="meta">2026.09.05 · 2개 메시지 <span class="chevron">▸</span></span>
-          </div>
-          <div class="preview">체크카드로 제일 많이 나간 게 뭐야? → 카드결제 카테고리가 총 601건…</div>
-          <div class="convo-detail">
-            <div class="line"><b>나</b> · 체크카드로 제일 많이 나간 게 뭐야?</div>
-            <div class="line"><b>AI</b> · 카드결제 카테고리가 601건, 약 21,345,000원으로 가장 커요.</div>
-          </div>
-        </article>
-
-        <article class="convo-card">
-          <div class="row1">
-            <span class="title">전역 후 소비 패턴</span>
-            <span class="meta">2026.09.01 · 8개 메시지 <span class="chevron">▸</span></span>
-          </div>
-          <div class="preview">월별로 지출 추세가 어떻게 변했는지 알려줘 → 최근 3개월 평균이 이전 3개월보다…</div>
-          <div class="convo-detail">
-            <div class="line"><b>나</b> · 월별로 지출 추세가 어떻게 변했는지 알려줘</div>
-            <div class="line"><b>AI</b> · 최근 3개월 월평균 지출이 이전 3개월보다 약 40% 늘었어요. 6월에 지출이 크게 튄 영향이 커요.</div>
-          </div>
-        </article>
-
-      </div>
+      <div class="convo-list" id="convoList"></div>
     </section>
 
     <!-- ---------- 3. 데이터 요약 화면 ---------- -->
@@ -194,58 +122,50 @@
 
       <div class="hero-card">
         <div>
-          <div class="hero-label">2025.08.18 — 2026.08.18 · 1년간 순증감</div>
-          <div class="hero-number positive">+226,833원</div>
+          <div class="hero-label" id="summaryPeriod">기간 불러오는 중…</div>
+          <div class="hero-number positive" id="summaryNet">—</div>
         </div>
         <div class="hero-sub">
-          <span>총 거래 <b>1,116건</b></span>
-          <span>수입 <b>30,470,405원</b> (254건)</span>
-          <span>지출 <b>30,243,572원</b> (862건)</span>
+          <span>총 거래 <b id="summaryCount">—</b></span>
+          <span>수입 <b id="summaryIncome">—</b></span>
+          <span>지출 <b id="summaryExpense">—</b></span>
         </div>
       </div>
 
       <div class="stat-grid">
         <div class="stat-card">
           <div class="label">평균 입금액</div>
-          <div class="value income">119,962원</div>
+          <div class="value income" id="summaryAvgIncome">—</div>
           <div class="footnote">total_income / income_count</div>
         </div>
         <div class="stat-card">
           <div class="label">평균 지출액</div>
-          <div class="value expense">35,085원</div>
+          <div class="value expense" id="summaryAvgExpense">—</div>
           <div class="footnote">total_expense / expense_count</div>
         </div>
         <div class="stat-card">
           <div class="label">최대 거래</div>
-          <div class="value income">4,767,952원</div>
-          <div class="footnote">가장 큰 입금</div>
+          <div class="value income" id="summaryMax">—</div>
+          <div class="footnote">가장 큰 거래(양수)</div>
         </div>
         <div class="stat-card">
           <div class="label">최소 거래</div>
-          <div class="value expense">−89,700원</div>
-          <div class="footnote">가장 큰 지출</div>
+          <div class="value expense" id="summaryMin">—</div>
+          <div class="footnote">가장 큰 지출(음수)</div>
         </div>
       </div>
 
       <div class="panel-row">
         <div class="panel">
-          <h3>이번 달 · 2026년 8월</h3>
-          <div class="month-row"><span>수입</span><span class="amt income">1,703,286원</span></div>
-          <div class="month-row"><span>지출</span><span class="amt expense">1,868,120원</span></div>
-          <div class="month-row"><span>순증감</span><span class="amt net negative">−164,834원</span></div>
+          <h3 id="summaryMonthTitle">이번 달</h3>
+          <div class="month-row"><span>수입</span><span class="amt income" id="summaryMonthIncome">—</span></div>
+          <div class="month-row"><span>지출</span><span class="amt expense" id="summaryMonthExpense">—</span></div>
+          <div class="month-row"><span>순증감</span><span class="amt net" id="summaryMonthNet">—</span></div>
         </div>
 
         <div class="panel">
           <h3>최근 추세</h3>
-          <span class="trend-badge up">▲ 최근 3개월 월평균 지출 증가 (+40%)</span>
-          <div class="bar-chart">
-            <div class="bar-col"><div class="bar" style="height:87%"></div><span class="bar-label">3월</span><span class="bar-value">176만</span></div>
-            <div class="bar-col"><div class="bar" style="height:46%"></div><span class="bar-label">4월</span><span class="bar-value">94만</span></div>
-            <div class="bar-col"><div class="bar" style="height:43%"></div><span class="bar-label">5월</span><span class="bar-value">87만</span></div>
-            <div class="bar-col is-recent"><div class="bar" style="height:100%"></div><span class="bar-label">6월</span><span class="bar-value">203만</span></div>
-            <div class="bar-col is-recent"><div class="bar" style="height:54%"></div><span class="bar-label">7월</span><span class="bar-value">109만</span></div>
-            <div class="bar-col is-recent"><div class="bar" style="height:92%"></div><span class="bar-label">8월</span><span class="bar-value">187만</span></div>
-          </div>
+          <span class="trend-badge" id="summaryTrend">불러오는 중…</span>
         </div>
       </div>
     </section>
@@ -261,34 +181,17 @@
       </div>
 
       <div class="table-toolbar">
-        <span class="count">전체 1,116건 중 1–10 표시</span>
+        <span class="count" id="dataTableCount">불러오는 중…</span>
       </div>
 
       <table class="data-table">
         <thead>
           <tr><th>날짜</th><th>내용</th><th>카테고리</th><th style="text-align:right;">금액</th><th></th></tr>
         </thead>
-        <tbody id="dataTableBody">
-          <tr><td>2026-08-18</td><td>체크카드 · 네이버페이</td><td><span class="cat-tag">카드결제</span></td><td class="amt negative">−89,700원</td><td class="row-actions"><button>수정</button><button>삭제</button></td></tr>
-          <tr><td>2026-08-18</td><td>체크카드 · 씨유(CU) 진해점</td><td><span class="cat-tag">카드결제</span></td><td class="amt negative">−4,600원</td><td class="row-actions"><button>수정</button><button>삭제</button></td></tr>
-          <tr><td>2026-08-18</td><td>계좌이체 송금</td><td><span class="cat-tag">계좌이체</span></td><td class="amt negative">−2,800원</td><td class="row-actions"><button>수정</button><button>삭제</button></td></tr>
-          <tr><td>2026-08-18</td><td>계좌이체 송금</td><td><span class="cat-tag">계좌이체</span></td><td class="amt negative">−13,000원</td><td class="row-actions"><button>수정</button><button>삭제</button></td></tr>
-          <tr><td>2026-08-17</td><td>계좌이체 송금</td><td><span class="cat-tag">계좌이체</span></td><td class="amt negative">−50,000원</td><td class="row-actions"><button>수정</button><button>삭제</button></td></tr>
-          <tr><td>2026-08-17</td><td>체크카드 · 택시</td><td><span class="cat-tag">카드결제</span></td><td class="amt negative">−5,150원</td><td class="row-actions"><button>수정</button><button>삭제</button></td></tr>
-          <tr><td>2026-08-15</td><td>계좌이체 입금</td><td><span class="cat-tag">계좌이체</span></td><td class="amt positive">+53,800원</td><td class="row-actions"><button>수정</button><button>삭제</button></td></tr>
-          <tr><td>2026-08-15</td><td>결산이자 입금</td><td><span class="cat-tag">이자</span></td><td class="amt positive">+85원</td><td class="row-actions"><button>수정</button><button>삭제</button></td></tr>
-          <tr><td>2026-08-14</td><td>체크카드 · 쿠우쿠우 창원점</td><td><span class="cat-tag">카드결제</span></td><td class="amt negative">−53,800원</td><td class="row-actions"><button>수정</button><button>삭제</button></td></tr>
-          <tr><td>2026-08-13</td><td>체크카드 · 롯데리아 진해장천점</td><td><span class="cat-tag">카드결제</span></td><td class="amt negative">−8,900원</td><td class="row-actions"><button>수정</button><button>삭제</button></td></tr>
-        </tbody>
+        <tbody id="dataTableBody"></tbody>
       </table>
 
-      <div class="pagination">
-        <button class="current">1</button>
-        <button>2</button>
-        <button>3</button>
-        <span>…</span>
-        <button>112</button>
-      </div>
+      <div class="pagination" id="pagination"></div>
     </section>
 
   </main>
@@ -300,7 +203,7 @@
     <h3 id="modalTitle">거래 추가</h3>
     <div class="field">
       <label>날짜</label>
-      <input type="date" id="fieldDate" value="2026-09-08">
+      <input type="date" id="fieldDate">
     </div>
     <div class="field">
       <label>내용 (memo)</label>
@@ -330,6 +233,8 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
