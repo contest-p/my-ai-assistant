@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 import config
-from routers import data
+from routers import conversations, data
 
 app = FastAPI(title="전역 후 1년, 내 소비를 아는 AI 비서")
 
@@ -22,8 +22,8 @@ def health_check():
 
 
 app.include_router(data.router)
+app.include_router(conversations.router)
 
-# Phase 5~6에서 라우터를 여기에 마저 연결합니다.
-# from routers import conversations, chat
-# app.include_router(conversations.router)
+# Phase 6에서 라우터를 여기에 마저 연결합니다.
+# from routers import chat
 # app.include_router(chat.router)

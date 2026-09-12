@@ -53,7 +53,12 @@
 - Phase 4(Trend 계산): 전부 완료. `get_summary()`가 trend 없이는 동작할 수 없어 Phase 3
   작업 중 `analysis_service.calculate_trend()`를 함께 구현했고, 실제 데이터로 "+40%
   증가" 결과를 확인해 PRD/Task 4.5 검산값과 일치함을 검증했다.
-- Phase 5부터는 아직 시작 전.
+- Phase 5(대화 기록 API): 전부 완료. `routers/conversations.py`에 4개 엔드포인트
+  (POST/GET/GET-by-id/DELETE `/api/conversations`) 구현, curl로 저장→목록→불러오기→삭제→
+  404 순서 그대로 검증. `POST /api/conversations`는 `/api/chat`(Phase 6)의 자동저장과
+  별개 엔드포인트라는 것을 계속 의식할 것 — Phase 8 프론트 연동 시 일반 채팅 흐름에서
+  이 엔드포인트를 중복 호출하지 않도록 주의.
+- Phase 6부터는 아직 시작 전.
 
 ## 개발 순서
 

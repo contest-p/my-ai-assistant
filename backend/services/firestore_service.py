@@ -76,3 +76,28 @@ def delete_data(doc_id: str) -> bool:
         return False
     doc_ref.delete()
     return True
+
+
+def add_conversation(title: str, messages: list[dict]) -> dict:
+    doc_ref = db.collection(CONVERSATIONS_COLLECTION).document()
+    now = firestore.SERVER_TIMESTAMP
+    doc_ref.set({"title": title, "messages": messages, "created_at": now, "updated_at": now})
+    return _doc_to_record(doc_ref.get())
+
+
+def list_conversations() -> list[dict]:
+    """메타 정렬용으로 전체 문서를 읽는다 (updated_at DESC는 호출부에서 정렬)."""
+    return [_doc_to_record(d) for d in db.collection(CONVERSATIONS_COLLECTION).stream()]
+
+
+def get_conversation(doc_id: str) -> dict | None:
+    snapshot = db.collection(CONVERSATIONS_COLLECTION).document(doc_id).get()
+    return _doc_to_record(snapshot) if snapshot.exists else None
+
+
+def delete_conversation(doc_id: str) -> bool:
+    doc_ref = db.collection(CONVERSATIONS_COLLECTION).document(doc_id)
+    if not doc_ref.get().exists:
+        return False
+    doc_ref.delete()
+    return True

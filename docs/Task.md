@@ -47,12 +47,13 @@
   PRD 13/Task 4.5의 검산값(+40%, 6~8월>3~5월)과 정확히 일치)
 
 ### Phase 5. 대화 기록 API
-- [ ] 5.1 Pydantic 모델 정의 (Conversation, Message)
-- [ ] 5.2 `POST /api/conversations`
-- [ ] 5.3 `GET /api/conversations` (메타만)
-- [ ] 5.4 `GET /api/conversations/{id}` (전체 메시지)
-- [ ] 5.5 `DELETE /api/conversations/{id}`
-- [ ] 5.6 Swagger에서 저장→목록→불러오기→삭제 흐름 테스트
+- [x] 5.1 Pydantic 모델 정의 (Conversation, Message)
+- [x] 5.2 `POST /api/conversations`
+- [x] 5.3 `GET /api/conversations` (메타만)
+- [x] 5.4 `GET /api/conversations/{id}` (전체 메시지)
+- [x] 5.5 `DELETE /api/conversations/{id}`
+- [x] 5.6 Swagger에서 저장→목록→불러오기→삭제 흐름 테스트 (curl로 순서대로 먼저 검증 완료,
+      Swagger 재확인은 사용자 몫)
 
 ### Phase 6. AI 챗봇 API
 - [ ] 6.1 OpenAI 클라이언트 초기화 (`OPENAI_BASE_URL`, `OPENAI_MODEL` 환경변수)
