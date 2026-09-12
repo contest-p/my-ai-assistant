@@ -47,7 +47,13 @@
   초기화, `scripts/import_data.py`로 1,116건 적재 및 검증 완료(입금 254 / 지출 862,
   category 미매핑 0건). 마스킹된 거래상대방("***", "토스 ***")의 memo는 입출금 방향
   기준으로 "계좌이체 송금"/"계좌이체 입금"으로 일반화하기로 확정(사용자 확인 완료).
-- Phase 3부터는 아직 시작 전.
+- Phase 3(데이터 API CRUD + Summary): 전부 완료. `routers/data.py`에 5개 엔드포인트
+  (POST/GET/PUT/DELETE `/api/data`, GET `/api/data/summary`) 구현, curl로 정상 케이스와
+  404 케이스 모두 확인.
+- Phase 4(Trend 계산): 전부 완료. `get_summary()`가 trend 없이는 동작할 수 없어 Phase 3
+  작업 중 `analysis_service.calculate_trend()`를 함께 구현했고, 실제 데이터로 "+40%
+  증가" 결과를 확인해 PRD/Task 4.5 검산값과 일치함을 검증했다.
+- Phase 5부터는 아직 시작 전.
 
 ## 개발 순서
 

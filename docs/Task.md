@@ -28,20 +28,23 @@
 - [x] 2.5 적재 검증 (1,116건, 입금+출금=1,116건)
 
 ### Phase 3. 데이터 API (CRUD + Summary)
-- [ ] 3.1 Pydantic 모델 정의 (`schemas.py`)
-- [ ] 3.2 `POST /api/data`
-- [ ] 3.3 `GET /api/data` (페이지네이션, inclusive 날짜 필터, 정렬)
-- [ ] 3.4 `PUT /api/data/{id}`
-- [ ] 3.5 `DELETE /api/data/{id}`
-- [ ] 3.6 `GET /api/data/summary` (수입/지출/평균/최대/최소/이번달)
-- [ ] 3.7 Swagger에서 5개 엔드포인트 수동 테스트
+- [x] 3.1 Pydantic 모델 정의 (`schemas.py`)
+- [x] 3.2 `POST /api/data`
+- [x] 3.3 `GET /api/data` (페이지네이션, inclusive 날짜 필터, 정렬)
+- [x] 3.4 `PUT /api/data/{id}`
+- [x] 3.5 `DELETE /api/data/{id}`
+- [x] 3.6 `GET /api/data/summary` (수입/지출/평균/최대/최소/이번달)
+- [x] 3.7 Swagger에서 5개 엔드포인트 수동 테스트 (curl로 먼저 검증 완료, Swagger 재확인은 사용자 몫)
 
 ### Phase 4. Trend 계산 로직
-- [ ] 4.1 월별 지출 집계 함수 (거래 없는 월 = 0원)
-- [ ] 4.2 최근 3개월 vs 이전 3개월 비교 구간 확정 (데이터 최신월 기준)
-- [ ] 4.3 변화율 계산
-- [ ] 4.4 판정 기준(±5%)
-- [ ] 4.5 예외 처리 (데이터 부족 / 이전 기간 0원) + summary 연결·수동 검증
+- [x] 4.1 월별 지출 집계 함수 (거래 없는 월 = 0원)
+- [x] 4.2 최근 3개월 vs 이전 3개월 비교 구간 확정 (데이터 최신월 기준)
+- [x] 4.3 변화율 계산
+- [x] 4.4 판정 기준(±5%)
+- [x] 4.5 예외 처리 (데이터 부족 / 이전 기간 0원) + summary 연결·수동 검증
+  (3.6 작업 중 함께 구현 — get_summary()가 trend 없이는 동작할 수 없어서. 실제 1,116건
+  데이터로 GET /api/data/summary 호출 결과 "최근 3개월 월평균 지출 증가 (+40%)" 확인,
+  PRD 13/Task 4.5의 검산값(+40%, 6~8월>3~5월)과 정확히 일치)
 
 ### Phase 5. 대화 기록 API
 - [ ] 5.1 Pydantic 모델 정의 (Conversation, Message)
