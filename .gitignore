@@ -1,0 +1,21 @@
+# 환경변수 / 비밀키
+.env
+.env.*
+!.env.example
+
+# Firebase 서비스 계정 키 (혹시 실수로 backend/에 저장하더라도 안전하게)
+*serviceAccountKey*.json
+*firebase-adminsdk*.json
+
+# 원본 거래내역 엑셀 (실명 마스킹 여부와 무관하게 저장소엔 올리지 않음)
+*.xlsx
+*.xls
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# OS / 에디터
+.DS_Store
