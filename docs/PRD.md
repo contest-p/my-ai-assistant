@@ -389,9 +389,13 @@ AI 프롬프트 주입에 사용할 요약 정보를 반환한다.
     "expense": 1868120,
     "net": -164834
   },
-  "trend": "최근 3개월 월평균 지출 감소 (-8%)"
+  "trend": "최근 3개월 월평균 지출 증가 (+40%)"
 }
 ```
+
+> 위 `trend` 값은 실제 1,116건으로 계산한 참고 방향이다(6~8월 평균이 3~5월 평균보다
+> 높게 나옴). TASK 4.5에서 이 값을 검산 기준으로 다시 대조하되, 정확한 소수점까지
+> 일치할 필요는 없다 — "증가" 방향과 대략적인 크기(30~50%대)만 맞으면 정상이다.
 
 > **수정 1 — `transaction_average` 제거**: 입금·지출을 부호 그대로 섞어 평균 내면(원래 값 203원)
 > 실사용 의미가 없다. "평균적으로 얼마씩 써?" 질문에 그대로 답하면 왜곡된 숫자가 나간다.
@@ -591,13 +595,15 @@ HTTP `201`
       "id": "c_x1y2z3",
       "title": "이번 달 지출 분석",
       "created_at": "2026-09-08T10:00:00Z",
+      "updated_at": "2026-09-08T10:05:00Z",
       "message_count": 2
     }
   ]
 }
 ```
 
-최신 대화를 먼저 표시한다.
+정렬: `updated_at DESC`. 마지막 메시지 시각 기준으로 최신 대화를 먼저 표시한다.
+기존 대화를 이어가면 20번의 `updated_at` 갱신 규칙에 따라 목록 순서에도 반영한다.
 
 ---
 
@@ -1039,6 +1045,10 @@ HTTP 404
 HTTP 500
 ```
 
+`/api/chat`은 대화 저장에 성공해야 정상 응답한다. 저장 실패 시 1회 재시도하고,
+계속 실패하면 AI 답변 대신 HTTP 500과 저장 실패 안내를 반환한다.
+OpenAI 호출 자체의 실패(타임아웃 포함)에만 HTTP 502를 적용한다.
+
 단, 외부 API의 민감한 내부 오류나 API Key 등은 응답에 노출하지 않는다.
 
 ---
@@ -1065,16 +1075,30 @@ ALLOWED_ORIGINS
 
 # 27. 환경 변수
 
-최소 다음 환경변수를 사용한다.
+백엔드 환경변수는 다음 5종을 사용한다.
 
 ```text
 OPENAI_API_KEY
+OPENAI_BASE_URL
+OPENAI_MODEL
 FIREBASE_SERVICE_ACCOUNT_JSON
-API_BASE_URL
 ALLOWED_ORIGINS
 ```
 
-환경변수는 GitHub에 커밋하지 않는다.
+`OPENAI_BASE_URL`은 코디세이가 제공하는 프록시 엔드포인트(`https://copa.codyssey.kr/v1`)
+주소다. OpenAI 클라이언트 초기화 시 `base_url` 파라미터로 넘긴다 — 이게 없으면 기본값인
+`api.openai.com`으로 요청이 나가서 실패한다 (`OPENAI_API_KEY`가 `sk-cody-live-`로
+시작하는 프록시 전용 키이기 때문).
+
+`OPENAI_MODEL` 환경변수로 모델명을 주입한다. 실제 모델명은 AI 연동 구현 시점에
+결정하며, 코드에 하드코딩하지 않는다. 단, 이 프록시가 지원하는 모델 목록이 일반
+OpenAI API와 다를 수 있으므로 Phase 6에서 실제로 확인 후 결정한다.
+
+프론트 설정값: `frontend/js/config.js`의 `API_BASE_URL`. Render 배포 URL로 직접
+변경한 후 커밋·재배포한다. 이 공개 API 주소는 백엔드 환경변수와 구분한다(빌드 과정이
+없는 바닐라 JS라 Vercel 환경변수로는 주입되지 않음 — 9번 Task 9-3 참고).
+
+백엔드 환경변수 값은 GitHub에 커밋하지 않는다.
 
 `.env`는 `.gitignore`에 포함한다.
 
@@ -1269,13 +1293,8 @@ https://<backend-domain>/docs
 
 Vercel
 
-프론트엔드에서:
-
-```text
-API_BASE_URL
-```
-
-을 환경변수로 사용한다.
+`frontend/js/config.js`의 `API_BASE_URL`을 Render 배포 URL(https)로 직접 변경한 후
+커밋·재배포한다. 빌드 과정 없는 정적 사이트이므로 Vercel 환경변수로 주입하지 않는다.
 
 ---
 
@@ -1308,16 +1327,20 @@ Vercel
 
 백엔드 및 프론트엔드 실행 방법.
 
-## 환경변수
+## 환경변수 및 프론트 설정값
 
-최소:
+백엔드 환경변수:
 
 ```text
 OPENAI_API_KEY
+OPENAI_BASE_URL
+OPENAI_MODEL
 FIREBASE_SERVICE_ACCOUNT_JSON
-API_BASE_URL
 ALLOWED_ORIGINS
 ```
+
+프론트 설정값은 `frontend/js/config.js`의 `API_BASE_URL`이며, Render 배포 URL로
+직접 변경 후 커밋·재배포하는 방법을 명시한다. 모델명은 AI 연동 구현 시 결정한다.
 
 ## 개인정보 처리
 

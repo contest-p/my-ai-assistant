@@ -19,8 +19,11 @@ def _parse_origins(raw: str) -> list[str]:
 # Phase 9(배포)에서 실제 Vercel 도메인으로 좁힙니다 (PRD 26번).
 ALLOWED_ORIGINS = _parse_origins(os.getenv("ALLOWED_ORIGINS", "*"))
 
-# 아래 세 값은 아직 Phase 1에서는 안 씁니다.
+# 아래 값들은 아직 Phase 1에서는 안 씁니다.
 # Phase 2(Firestore 연동)와 Phase 6(AI 챗봇)에서 실제로 읽어서 사용하기 시작합니다.
 FIREBASE_SERVICE_ACCOUNT_JSON = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# 코디세이 프록시 엔드포인트. OpenAI 클라이언트 생성 시 base_url로 넘겨야 합니다
+# (안 넘기면 기본값인 api.openai.com으로 요청이 나가서 sk-cody-live- 키가 안 먹힘).
+OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL")

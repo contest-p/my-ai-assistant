@@ -20,6 +20,11 @@
   커밋한다. Vercel 환경변수로 넣지 않는다 — 빌드 과정이 없는 바닐라 JS라 반영이 안 된다.
 - **OpenAI 모델명**: 아직 미정. `OPENAI_MODEL` 환경변수로 주입하고, 코드에 특정 모델명을
   하드코딩하지 않는다.
+- **OpenAI는 직접 호출이 아니라 코디세이 프록시 경유**: 발급받은 키가 `sk-cody-live-`로
+  시작하며, `OPENAI_BASE_URL`(`https://copa.codyssey.kr/v1`) 환경변수를 OpenAI 클라이언트의
+  `base_url` 파라미터로 반드시 넘겨야 한다. 안 넘기면 기본값인 `api.openai.com`으로
+  요청이 나가서 실패한다. 이 프록시가 지원하는 모델 목록도 일반 OpenAI와 다를 수
+  있으니 Phase 6에서 직접 확인 후 `OPENAI_MODEL`을 정한다.
 - **category 미매핑**: 값이 없으면 항상 `null`. value 부호로 추측해서 채우지 않는다.
 - **summary 계산**: `GET /api/data/summary`는 `data` 컬렉션 전체를 매번 다시 읽어서
   계산한다(페이지네이션된 목록 재사용 금지). 이 계산 로직(`analysis_service.get_summary()`)은

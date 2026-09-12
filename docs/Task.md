@@ -52,7 +52,7 @@
 - [ ] 5.6 Swagger에서 저장→목록→불러오기→삭제 흐름 테스트
 
 ### Phase 6. AI 챗봇 API
-- [ ] 6.1 OpenAI 클라이언트 초기화 (`OPENAI_MODEL` 환경변수)
+- [ ] 6.1 OpenAI 클라이언트 초기화 (`OPENAI_BASE_URL`, `OPENAI_MODEL` 환경변수)
 - [ ] 6.2 시스템 프롬프트 조립 함수
 - [ ] 6.3 `POST /api/chat` — 신규/기존 대화 분기
 - [ ] 6.4 존재하지 않는 `conversation_id` 404 처리
@@ -64,7 +64,7 @@
 - [ ] 7.1 `requirements.txt` 확정 (`pip freeze`)
 - [ ] 7.2 GitHub push
 - [ ] 7.3 Render Web Service 생성 (Root Directory=`backend`)
-- [ ] 7.4 환경변수 4종 등록
+- [ ] 7.4 환경변수 5종 등록
 - [ ] 7.5 배포 URL `/docs` 확인 + 콜드스타트 체감
 
 ### Phase 8. 프론트엔드 개발
@@ -319,7 +319,11 @@ DELETE 후 다시 GET/{id} 하면 404 뜨는지 순서대로 확인.
 **6.1 OpenAI 클라이언트**
 `services/openai_service.py`. `OPENAI_MODEL` 환경변수로 모델명을 주입한다.
 실제 모델명은 AI 연동 구현 시점에 결정하며, 코드에 모델명을 하드코딩하지 않는다.
-클라이언트는 `openai.OpenAI(api_key=...)`.
+클라이언트는 `openai.OpenAI(api_key=..., base_url=...)` — **`base_url`은
+`OPENAI_BASE_URL` 환경변수에서 읽는다.** 코디세이가 제공하는 키(`sk-cody-live-`로
+시작)는 프록시 전용이라, `base_url`을 안 넘기면 기본값인 `api.openai.com`으로
+요청이 나가서 실패한다. 이 프록시가 어떤 모델을 지원하는지도 이 시점에 같이 확인해서
+`OPENAI_MODEL` 값을 정한다 — 일반 OpenAI API 라인업과 다를 수 있다.
 
 **6.2 시스템 프롬프트 조립**
 PRD 22번 템플릿 그대로, `GET /api/data/summary` 응답 값을 f-string으로 채워넣는 함수
@@ -383,8 +387,8 @@ uvicorn main:app --host 0.0.0.0 --port $PORT
 ```
 
 **7.4 환경변수 등록**
-Render 대시보드에 `OPENAI_API_KEY`, `OPENAI_MODEL`, `FIREBASE_SERVICE_ACCOUNT_JSON`,
-`ALLOWED_ORIGINS`(우선 `*`, Phase 9-4에서 좁힘) 4종 등록.
+Render 대시보드에 `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`,
+`FIREBASE_SERVICE_ACCOUNT_JSON`, `ALLOWED_ORIGINS`(우선 `*`, Phase 9-4에서 좁힘) 5종 등록.
 
 **7.5 배포 확인**
 `https://<render-domain>/docs` 접속 확인. 첫 요청이 얼마나 느린지(콜드스타트) 직접
