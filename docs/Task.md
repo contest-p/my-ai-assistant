@@ -21,11 +21,11 @@
 - [ ] 1.7 로컬 실행 + Swagger(`/docs`) 확인
 
 ### Phase 2. Firestore 연동 + 초기 데이터 적재
-- [ ] 2.1 firebase-admin 초기화 (`config.py`)
-- [ ] 2.2 `KB_거래내역_비식별화.xlsx` → (date, value, memo, category) 변환 스크립트
-- [ ] 2.3 category 매핑 로직 구현
-- [ ] 2.4 Firestore `data` 컬렉션 bulk upload
-- [ ] 2.5 적재 검증 (1,116건, 입금+출금=1,116건)
+- [x] 2.1 firebase-admin 초기화 (`config.py`)
+- [x] 2.2 `KB_거래내역_비식별화.xlsx` → (date, value, memo, category) 변환 스크립트
+- [x] 2.3 category 매핑 로직 구현
+- [x] 2.4 Firestore `data` 컬렉션 bulk upload
+- [x] 2.5 적재 검증 (1,116건, 입금+출금=1,116건)
 
 ### Phase 3. 데이터 API (CRUD + Summary)
 - [ ] 3.1 Pydantic 모델 정의 (`schemas.py`)
