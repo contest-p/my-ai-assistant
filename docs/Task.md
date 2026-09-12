@@ -87,9 +87,11 @@
 
 ### Phase 9. 프론트엔드 배포 + 통합 검증
 - [x] 9.1 GitHub push
-- [ ] 9.2 Vercel 배포 (Root Directory=`frontend`, Other preset) — 사용자가 대시보드에서 직접 진행
+- [x] 9.2 Vercel 배포 (Root Directory=`frontend`, Other preset) — 사용자가 대시보드에서 직접 진행
 - [x] 9.3 `frontend/js/config.js`의 `API_BASE_URL`을 Render 배포 URL로 변경 후 커밋·재배포
-- [ ] 9.4 Render `ALLOWED_ORIGINS`를 Vercel 도메인으로 좁히기 — 사용자가 대시보드에서 직접 진행
+- [x] 9.4 Render `ALLOWED_ORIGINS`를 Vercel 도메인으로 좁히기 — 사용자가 대시보드에서 직접
+      진행. ALLOWED_ORIGINS가 실제 Vercel 도메인으로 좁혀진 상태에서 9.5 검증 시 배포된
+      프론트(Vercel)→백엔드(Render) 채팅 호출이 CORS 에러 없이 정상 동작한 것으로 확인됨
 - [x] 9.5 PRD 37번 검증 기준 전체 재확인 (배포 URL 기준) — 32개 중 31개 PASS, 보안검증 5번은
       9.6(README/스크린샷) 완료 후 재확인해서 PASS로 전환. 실패 항목 없음.
 - [x] 9.6 README.md 작성 + 스크린샷 3종 촬영 — `docs/screenshots/`에 저장, 실제 배포된
