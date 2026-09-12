@@ -12,53 +12,53 @@
 ## 전체 체크리스트
 
 ### Phase 1. 프로젝트 초기 설정
-- [ ] 1.1 GitHub 저장소 생성 (단일 repo, `backend/` + `frontend/`)
-- [ ] 1.2 backend 폴더 뼈대 생성 (routers/services/models 분리)
-- [ ] 1.3 Python 3.11 가상환경 구성 + 패키지 설치
-- [ ] 1.4 Firebase 프로젝트 생성 + Firestore 활성화 + 서비스 계정 키 발급
-- [ ] 1.5 OpenAI API 키 발급
-- [ ] 1.6 FastAPI 앱 초기화 (CORS `*`, 헬스체크)
-- [ ] 1.7 로컬 실행 + Swagger(`/docs`) 확인
+- [x] 1.1 GitHub 저장소 생성 (단일 repo, `backend/` + `frontend/`)
+- [x] 1.2 backend 폴더 뼈대 생성 (routers/services/models 분리)
+- [x] 1.3 Python 3.11 가상환경 구성 + 패키지 설치
+- [x] 1.4 Firebase 프로젝트 생성 + Firestore 활성화 + 서비스 계정 키 발급
+- [x] 1.5 OpenAI API 키 발급
+- [x] 1.6 FastAPI 앱 초기화 (CORS `*`, 헬스체크)
+- [x] 1.7 로컬 실행 + Swagger(`/docs`) 확인
 
 ### Phase 2. Firestore 연동 + 초기 데이터 적재
-- [ ] 2.1 firebase-admin 초기화 (`config.py`)
-- [ ] 2.2 `KB_거래내역_비식별화.xlsx` → (date, value, memo, category) 변환 스크립트
-- [ ] 2.3 category 매핑 로직 구현
-- [ ] 2.4 Firestore `data` 컬렉션 bulk upload
-- [ ] 2.5 적재 검증 (1,116건, 입금+출금=1,116건)
+- [x] 2.1 firebase-admin 초기화 (`config.py`)
+- [x] 2.2 `KB_거래내역_비식별화.xlsx` → (date, value, memo, category) 변환 스크립트
+- [x] 2.3 category 매핑 로직 구현
+- [x] 2.4 Firestore `data` 컬렉션 bulk upload
+- [x] 2.5 적재 검증 (1,116건, 입금+출금=1,116건)
 
 ### Phase 3. 데이터 API (CRUD + Summary)
-- [ ] 3.1 Pydantic 모델 정의 (`schemas.py`)
-- [ ] 3.2 `POST /api/data`
-- [ ] 3.3 `GET /api/data` (페이지네이션, inclusive 날짜 필터, 정렬)
-- [ ] 3.4 `PUT /api/data/{id}`
-- [ ] 3.5 `DELETE /api/data/{id}`
-- [ ] 3.6 `GET /api/data/summary` (수입/지출/평균/최대/최소/이번달)
-- [ ] 3.7 Swagger에서 5개 엔드포인트 수동 테스트
+- [x] 3.1 Pydantic 모델 정의 (`schemas.py`)
+- [x] 3.2 `POST /api/data`
+- [x] 3.3 `GET /api/data` (페이지네이션, inclusive 날짜 필터, 정렬)
+- [x] 3.4 `PUT /api/data/{id}`
+- [x] 3.5 `DELETE /api/data/{id}`
+- [x] 3.6 `GET /api/data/summary` (수입/지출/평균/최대/최소/이번달)
+- [x] 3.7 Swagger에서 5개 엔드포인트 수동 테스트
 
 ### Phase 4. Trend 계산 로직
-- [ ] 4.1 월별 지출 집계 함수 (거래 없는 월 = 0원)
-- [ ] 4.2 최근 3개월 vs 이전 3개월 비교 구간 확정 (데이터 최신월 기준)
-- [ ] 4.3 변화율 계산
-- [ ] 4.4 판정 기준(±5%)
-- [ ] 4.5 예외 처리 (데이터 부족 / 이전 기간 0원) + summary 연결·수동 검증
+- [x] 4.1 월별 지출 집계 함수 (거래 없는 월 = 0원)
+- [x] 4.2 최근 3개월 vs 이전 3개월 비교 구간 확정 (데이터 최신월 기준)
+- [x] 4.3 변화율 계산
+- [x] 4.4 판정 기준(±5%)
+- [x] 4.5 예외 처리 (데이터 부족 / 이전 기간 0원) + summary 연결·수동 검증
 
 ### Phase 5. 대화 기록 API
-- [ ] 5.1 Pydantic 모델 정의 (Conversation, Message)
-- [ ] 5.2 `POST /api/conversations`
-- [ ] 5.3 `GET /api/conversations` (메타만)
-- [ ] 5.4 `GET /api/conversations/{id}` (전체 메시지)
-- [ ] 5.5 `DELETE /api/conversations/{id}`
-- [ ] 5.6 Swagger에서 저장→목록→불러오기→삭제 흐름 테스트
+- [x] 5.1 Pydantic 모델 정의 (Conversation, Message)
+- [x] 5.2 `POST /api/conversations`
+- [x] 5.3 `GET /api/conversations` (메타만)
+- [x] 5.4 `GET /api/conversations/{id}` (전체 메시지)
+- [x] 5.5 `DELETE /api/conversations/{id}`
+- [x] 5.6 Swagger에서 저장→목록→불러오기→삭제 흐름 테스트
 
 ### Phase 6. AI 챗봇 API
-- [ ] 6.1 OpenAI 클라이언트 초기화 (`OPENAI_BASE_URL`, `OPENAI_MODEL` 환경변수)
-- [ ] 6.2 시스템 프롬프트 조립 함수
-- [ ] 6.3 `POST /api/chat` — 신규/기존 대화 분기
-- [ ] 6.4 존재하지 않는 `conversation_id` 404 처리
-- [ ] 6.5 GPT 호출 + `max_tokens` 제한
-- [ ] 6.6 대화 자동 저장 로직
-- [ ] 6.7 실제 질문으로 통합 테스트 (기본 질문 4개, PRD 23번)
+- [x] 6.1 OpenAI 클라이언트 초기화 (`OPENAI_BASE_URL`, `OPENAI_MODEL` 환경변수)
+- [x] 6.2 시스템 프롬프트 조립 함수
+- [x] 6.3 `POST /api/chat` — 신규/기존 대화 분기
+- [x] 6.4 존재하지 않는 `conversation_id` 404 처리
+- [x] 6.5 GPT 호출 + `max_tokens` 제한
+- [x] 6.6 대화 자동 저장 로직
+- [x] 6.7 실제 질문으로 통합 테스트 (기본 질문 4개, PRD 23번)
 
 ### Phase 7. 백엔드 배포 (Render)
 - [ ] 7.1 `requirements.txt` 확정 (`pip freeze`)
