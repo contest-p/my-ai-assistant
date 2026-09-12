@@ -78,11 +78,39 @@ def delete_data(doc_id: str) -> bool:
     return True
 
 
-def add_conversation(title: str, messages: list[dict]) -> dict:
+TITLE_MAX_LENGTH = 30
+
+
+def _auto_title(messages: list[dict]) -> str:
+    # title이 비어있으면 첫 user 메시지로 자동 생성한다 (PRD 15-1, 30자 내외로 자름).
+    # POST /api/conversations와 /api/chat(신규 대화)이 이 로직을 공유한다.
+    first_user = next((m for m in messages if m.get("role") == "user"), None)
+    if first_user is None:
+        return "새 대화"
+    content = (first_user.get("content") or "").strip()
+    if not content:
+        return "새 대화"
+    if len(content) > TITLE_MAX_LENGTH:
+        return content[:TITLE_MAX_LENGTH] + "..."
+    return content
+
+
+def add_conversation(title: str | None, messages: list[dict]) -> dict:
+    title = title.strip() if title else ""
+    if not title:
+        title = _auto_title(messages)
     doc_ref = db.collection(CONVERSATIONS_COLLECTION).document()
     now = firestore.SERVER_TIMESTAMP
     doc_ref.set({"title": title, "messages": messages, "created_at": now, "updated_at": now})
     return _doc_to_record(doc_ref.get())
+
+
+def append_messages(doc_id: str, messages: list[dict]) -> None:
+    """messages: 기존 이력 + 새 메시지가 합쳐진 전체 배열. updated_at도 함께 갱신한다
+    (5.3 "최신 대화가 목록 맨 위" 정렬이 실제로 동작하려면 필요, Task 6.6)."""
+    db.collection(CONVERSATIONS_COLLECTION).document(doc_id).update(
+        {"messages": messages, "updated_at": firestore.SERVER_TIMESTAMP}
+    )
 
 
 def list_conversations() -> list[dict]:

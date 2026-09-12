@@ -26,3 +26,8 @@ class Message(BaseModel):
 class ConversationCreate(BaseModel):
     title: str | None = None
     messages: list[Message]
+
+
+class ChatRequest(BaseModel):
+    message: str = Field(min_length=1)
+    conversation_id: str | None = None

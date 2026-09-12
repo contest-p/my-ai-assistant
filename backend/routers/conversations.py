@@ -1,24 +1,9 @@
 from fastapi import APIRouter, HTTPException
 
-from models.schemas import ConversationCreate, Message
+from models.schemas import ConversationCreate
 from services import firestore_service
 
 router = APIRouter(prefix="/api/conversations", tags=["conversations"])
-
-TITLE_MAX_LENGTH = 30
-
-
-def _auto_title(messages: list[Message]) -> str:
-    # title이 비어있으면 첫 user 메시지로 자동 생성한다 (PRD 15-1, 30자 내외로 자름)
-    first_user = next((m for m in messages if m.role == "user"), None)
-    if first_user is None:
-        return "새 대화"
-    content = first_user.content.strip()
-    if not content:
-        return "새 대화"
-    if len(content) > TITLE_MAX_LENGTH:
-        return content[:TITLE_MAX_LENGTH] + "..."
-    return content
 
 
 @router.post("", status_code=201)
@@ -26,12 +11,8 @@ def create_conversation(payload: ConversationCreate):
     # ⚠ 이 엔드포인트는 /api/chat의 자동저장(Phase 6)과 별개다. 여긴 미션이 요구하는
     # 독립 API이자 수동 백업/가져오기용이며, 일반 채팅 흐름에서는 호출되지 않는다
     # (PRD 15번 중복 저장 방지 규칙 — Phase 8 프론트 연동 시 반드시 지킬 것).
-    title = payload.title.strip() if payload.title else ""
-    if not title:
-        title = _auto_title(payload.messages)
     messages = [m.model_dump() for m in payload.messages]
-
-    conversation = firestore_service.add_conversation(title, messages)
+    conversation = firestore_service.add_conversation(payload.title, messages)
     return {
         "id": conversation["id"],
         "title": conversation["title"],

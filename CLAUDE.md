@@ -18,13 +18,12 @@
   Vercel Root Directory=`frontend`.
 - **프론트 API 주소**: `frontend/js/config.js`의 `API_BASE_URL`을 배포 직전에 직접 수정해서
   커밋한다. Vercel 환경변수로 넣지 않는다 — 빌드 과정이 없는 바닐라 JS라 반영이 안 된다.
-- **OpenAI 모델명**: 아직 미정. `OPENAI_MODEL` 환경변수로 주입하고, 코드에 특정 모델명을
-  하드코딩하지 않는다.
+- **OpenAI 모델**: `gpt-5.5`로 확정(코디세이 프록시가 지원하는 11종 확인 후 결정).
+  `OPENAI_MODEL` 환경변수로 주입, 코드에 하드코딩하지 않는다.
 - **OpenAI는 직접 호출이 아니라 코디세이 프록시 경유**: 발급받은 키가 `sk-cody-live-`로
   시작하며, `OPENAI_BASE_URL`(`https://copa.codyssey.kr/v1`) 환경변수를 OpenAI 클라이언트의
   `base_url` 파라미터로 반드시 넘겨야 한다. 안 넘기면 기본값인 `api.openai.com`으로
-  요청이 나가서 실패한다. 이 프록시가 지원하는 모델 목록도 일반 OpenAI와 다를 수
-  있으니 Phase 6에서 직접 확인 후 `OPENAI_MODEL`을 정한다.
+  요청이 나가서 실패한다.
 - **category 미매핑**: 값이 없으면 항상 `null`. value 부호로 추측해서 채우지 않는다.
 - **summary 계산**: `GET /api/data/summary`는 `data` 컬렉션 전체를 매번 다시 읽어서
   계산한다(페이지네이션된 목록 재사용 금지). 이 계산 로직(`analysis_service.get_summary()`)은
@@ -42,23 +41,13 @@
 
 ## 진행 상황
 
-- Phase 1(프로젝트 초기 설정): 전부 완료 (1.1~1.7).
-- Phase 2(Firestore 연동 + 초기 데이터 적재): 전부 완료. `config.py`에서 firebase-admin
-  초기화, `scripts/import_data.py`로 1,116건 적재 및 검증 완료(입금 254 / 지출 862,
-  category 미매핑 0건). 마스킹된 거래상대방("***", "토스 ***")의 memo는 입출금 방향
-  기준으로 "계좌이체 송금"/"계좌이체 입금"으로 일반화하기로 확정(사용자 확인 완료).
-- Phase 3(데이터 API CRUD + Summary): 전부 완료. `routers/data.py`에 5개 엔드포인트
-  (POST/GET/PUT/DELETE `/api/data`, GET `/api/data/summary`) 구현, curl로 정상 케이스와
-  404 케이스 모두 확인.
-- Phase 4(Trend 계산): 전부 완료. `get_summary()`가 trend 없이는 동작할 수 없어 Phase 3
-  작업 중 `analysis_service.calculate_trend()`를 함께 구현했고, 실제 데이터로 "+40%
-  증가" 결과를 확인해 PRD/Task 4.5 검산값과 일치함을 검증했다.
-- Phase 5(대화 기록 API): 전부 완료. `routers/conversations.py`에 4개 엔드포인트
-  (POST/GET/GET-by-id/DELETE `/api/conversations`) 구현, curl로 저장→목록→불러오기→삭제→
-  404 순서 그대로 검증. `POST /api/conversations`는 `/api/chat`(Phase 6)의 자동저장과
-  별개 엔드포인트라는 것을 계속 의식할 것 — Phase 8 프론트 연동 시 일반 채팅 흐름에서
-  이 엔드포인트를 중복 호출하지 않도록 주의.
-- Phase 6부터는 아직 시작 전.
+- Phase 1(프로젝트 초기 설정): 완료.
+- Phase 2(Firestore 연동 + 초기 데이터 적재): 완료. 1,116건(입금254/지출862) 적재 검증됨.
+- Phase 3(데이터 API CRUD+summary): 완료.
+- Phase 4(Trend 계산): 완료. Phase 3의 summary가 trend를 필요로 해서 같이 구현됨.
+- Phase 5(대화 기록 API): 완료.
+- Phase 6(AI 챗봇 API): 완료. 모델 `gpt-5.5` 확정.
+- Phase 7(Render 배포)부터 진행 예정.
 
 ## 개발 순서
 

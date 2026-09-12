@@ -21,39 +21,35 @@
 - [ ] 1.7 로컬 실행 + Swagger(`/docs`) 확인
 
 ### Phase 2. Firestore 연동 + 초기 데이터 적재
-- [x] 2.1 firebase-admin 초기화 (`config.py`)
-- [x] 2.2 `KB_거래내역_비식별화.xlsx` → (date, value, memo, category) 변환 스크립트
-- [x] 2.3 category 매핑 로직 구현
-- [x] 2.4 Firestore `data` 컬렉션 bulk upload
-- [x] 2.5 적재 검증 (1,116건, 입금+출금=1,116건)
+- [ ] 2.1 firebase-admin 초기화 (`config.py`)
+- [ ] 2.2 `KB_거래내역_비식별화.xlsx` → (date, value, memo, category) 변환 스크립트
+- [ ] 2.3 category 매핑 로직 구현
+- [ ] 2.4 Firestore `data` 컬렉션 bulk upload
+- [ ] 2.5 적재 검증 (1,116건, 입금+출금=1,116건)
 
 ### Phase 3. 데이터 API (CRUD + Summary)
-- [x] 3.1 Pydantic 모델 정의 (`schemas.py`)
-- [x] 3.2 `POST /api/data`
-- [x] 3.3 `GET /api/data` (페이지네이션, inclusive 날짜 필터, 정렬)
-- [x] 3.4 `PUT /api/data/{id}`
-- [x] 3.5 `DELETE /api/data/{id}`
-- [x] 3.6 `GET /api/data/summary` (수입/지출/평균/최대/최소/이번달)
-- [x] 3.7 Swagger에서 5개 엔드포인트 수동 테스트 (curl로 먼저 검증 완료, Swagger 재확인은 사용자 몫)
+- [ ] 3.1 Pydantic 모델 정의 (`schemas.py`)
+- [ ] 3.2 `POST /api/data`
+- [ ] 3.3 `GET /api/data` (페이지네이션, inclusive 날짜 필터, 정렬)
+- [ ] 3.4 `PUT /api/data/{id}`
+- [ ] 3.5 `DELETE /api/data/{id}`
+- [ ] 3.6 `GET /api/data/summary` (수입/지출/평균/최대/최소/이번달)
+- [ ] 3.7 Swagger에서 5개 엔드포인트 수동 테스트
 
 ### Phase 4. Trend 계산 로직
-- [x] 4.1 월별 지출 집계 함수 (거래 없는 월 = 0원)
-- [x] 4.2 최근 3개월 vs 이전 3개월 비교 구간 확정 (데이터 최신월 기준)
-- [x] 4.3 변화율 계산
-- [x] 4.4 판정 기준(±5%)
-- [x] 4.5 예외 처리 (데이터 부족 / 이전 기간 0원) + summary 연결·수동 검증
-  (3.6 작업 중 함께 구현 — get_summary()가 trend 없이는 동작할 수 없어서. 실제 1,116건
-  데이터로 GET /api/data/summary 호출 결과 "최근 3개월 월평균 지출 증가 (+40%)" 확인,
-  PRD 13/Task 4.5의 검산값(+40%, 6~8월>3~5월)과 정확히 일치)
+- [ ] 4.1 월별 지출 집계 함수 (거래 없는 월 = 0원)
+- [ ] 4.2 최근 3개월 vs 이전 3개월 비교 구간 확정 (데이터 최신월 기준)
+- [ ] 4.3 변화율 계산
+- [ ] 4.4 판정 기준(±5%)
+- [ ] 4.5 예외 처리 (데이터 부족 / 이전 기간 0원) + summary 연결·수동 검증
 
 ### Phase 5. 대화 기록 API
-- [x] 5.1 Pydantic 모델 정의 (Conversation, Message)
-- [x] 5.2 `POST /api/conversations`
-- [x] 5.3 `GET /api/conversations` (메타만)
-- [x] 5.4 `GET /api/conversations/{id}` (전체 메시지)
-- [x] 5.5 `DELETE /api/conversations/{id}`
-- [x] 5.6 Swagger에서 저장→목록→불러오기→삭제 흐름 테스트 (curl로 순서대로 먼저 검증 완료,
-      Swagger 재확인은 사용자 몫)
+- [ ] 5.1 Pydantic 모델 정의 (Conversation, Message)
+- [ ] 5.2 `POST /api/conversations`
+- [ ] 5.3 `GET /api/conversations` (메타만)
+- [ ] 5.4 `GET /api/conversations/{id}` (전체 메시지)
+- [ ] 5.5 `DELETE /api/conversations/{id}`
+- [ ] 5.6 Swagger에서 저장→목록→불러오기→삭제 흐름 테스트
 
 ### Phase 6. AI 챗봇 API
 - [ ] 6.1 OpenAI 클라이언트 초기화 (`OPENAI_BASE_URL`, `OPENAI_MODEL` 환경변수)
@@ -320,14 +316,18 @@ DELETE 후 다시 GET/{id} 하면 404 뜨는지 순서대로 확인.
 
 ### Phase 6. AI 챗봇 API
 
-**6.1 OpenAI 클라이언트**
-`services/openai_service.py`. `OPENAI_MODEL` 환경변수로 모델명을 주입한다.
-실제 모델명은 AI 연동 구현 시점에 결정하며, 코드에 모델명을 하드코딩하지 않는다.
-클라이언트는 `openai.OpenAI(api_key=..., base_url=...)` — **`base_url`은
+**6.1 OpenAI 클라이언트 — ✅ 완료, 모델 확정: `gpt-5.5`**
+`services/openai_service.py`. `OPENAI_MODEL` 환경변수로 모델명을 주입한다(코드
+하드코딩 안 함). 클라이언트는 `openai.OpenAI(api_key=..., base_url=...)` — **`base_url`은
 `OPENAI_BASE_URL` 환경변수에서 읽는다.** 코디세이가 제공하는 키(`sk-cody-live-`로
 시작)는 프록시 전용이라, `base_url`을 안 넘기면 기본값인 `api.openai.com`으로
-요청이 나가서 실패한다. 이 프록시가 어떤 모델을 지원하는지도 이 시점에 같이 확인해서
-`OPENAI_MODEL` 값을 정한다 — 일반 OpenAI API 라인업과 다를 수 있다.
+요청이 나가서 실패한다.
+
+`/models` 엔드포인트로 확인한 프록시 지원 모델 11종: claude-haiku-4, claude-opus-4-7,
+claude-opus-4-8, claude-sonnet-4, gemini-3-flash, gemini-3.1-flash-lite, gemini-3.1-pro,
+gpt-5-mini, gpt-5.4, gpt-5.4-mini, **gpt-5.5**(채택). `gpt-5-mini`/`gpt-5.4-mini`가
+더 저렴할 가능성이 있었지만, 이미 `gpt-5.5`로 6.7 통합 테스트까지 완료된 상태이고
+개인 프로젝트라 트래픽이 적어 재검증 없이 유지하기로 결정했다(2026-09, 사용자 확인).
 
 **6.2 시스템 프롬프트 조립**
 PRD 22번 템플릿 그대로, `GET /api/data/summary` 응답 값을 f-string으로 채워넣는 함수
