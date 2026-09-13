@@ -1,2 +1,2 @@
-// 배포 시 Render 배포 URL로 직접 변경 후 커밋 (Vercel 환경변수로 대체하지 않음 — PRD 27, Task 9.3)
+// 로컬 직접 실행용 공개 주소. Vercel 배포에서는 build.mjs가 API_BASE_URL 환경변수로 생성한다.
 const API_BASE_URL = "https://my-ai-assistant-bogq.onrender.com";

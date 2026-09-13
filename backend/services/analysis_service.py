@@ -6,25 +6,11 @@ calculate_trend()는 PRD 14 / Task 4.1~4.4 스펙 그대로다. get_summary()가
 동작할 수 없어 Phase 3 작업 중 함께 구현했다 — Phase 4에서는 이 로직에 대한 수동 검증
 (4.5)만 남아있다.
 
-get_transaction_summary()는 PRD 24-1(2026-09-13 재설계: 카테고리·기간 통합 조회) 스펙이다.
-Task 10.1의 /api/chat Function Calling과 Task 10.4의 MCP tool이 이 함수를 그대로 같이
-호출한다 — 두 채널이 같은 계산 로직을 따로 구현하지 않는다.
 """
 
-from services.firestore_service import fetch_all_data
+from datetime import datetime, timezone
 
-# PRD 7-1 매핑표(scripts/import_data.py의 CATEGORY_MAP)가 실제로 만들어내는 category 값.
-# PRD 24-1의 enum 및 각 값 설명과 동일하다 — Function Calling(10.1)과 MCP tool(10.4)
-# 스키마가 이 딕셔너리 하나를 같이 참조해서 설명 문구가 따로 어긋나지 않게 한다.
-CATEGORY_DESCRIPTIONS = {
-    "카드결제": "체크카드·신용카드·국민카드로 결제한 거래",
-    "계좌이체": "오픈뱅킹·전자금융 등 계좌 간 이체",
-    "현금인출": "ATM 등 현금 출금",
-    "급여": "급여 입금",
-    "이자": "결산이자 입금",
-    "기타입금": "위에 해당하지 않는 입금",
-}
-CATEGORY_VALUES = list(CATEGORY_DESCRIPTIONS.keys())
+from services.firestore_service import fetch_all_data
 
 
 def _month_key(date_str: str) -> str:
@@ -84,12 +70,46 @@ def calculate_trend(records: list[dict]) -> str:
     return f"최근 3개월 월평균 지출 {direction} ({sign}{abs(round(change_rate))}%)"
 
 
+def build_insights(records: list[dict]) -> dict:
+    monthly = []
+    if records:
+        dates = [r["date"] for r in records]
+        buckets = {m: {"month": m, "income": 0, "expense": 0, "net": 0, "count": 0}
+                   for m in _months_between(min(dates)[:7], max(dates)[:7])}
+        for record in records:
+            row = buckets[record["date"][:7]]
+            value = record["value"]
+            row["income"] += max(value, 0)
+            row["expense"] += max(-value, 0)
+            row["net"] += value
+            row["count"] += 1
+        monthly = list(buckets.values())
+    income = sum(m["income"] for m in monthly)
+    expense = sum(m["expense"] for m in monthly)
+    peak = max(monthly, key=lambda m: m["expense"]) if expense else None
+    return {
+        "monthly": monthly,
+        "insights": {
+            "savings_rate": round((income - expense) / income * 100, 1) if income else None,
+            "average_monthly_expense": expense / len(monthly) if monthly else 0,
+            "peak_expense_month": {"month": peak["month"], "expense": peak["expense"]} if peak else None,
+        },
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
 def get_summary() -> dict:
     """`data` 컬렉션 전체를 매번 다시 읽어서 계산한다 (페이지네이션된 목록 재사용 금지)."""
-    records = fetch_all_data()
+    return build_summary(fetch_all_data())
+
+
+def build_summary(records: list[dict]) -> dict:
+    """한 번 읽은 거래로 기본 요약과 인사이트를 함께 계산한다."""
+    extended = build_insights(records)
 
     if not records:
         return {
+            **extended,
             "period": None,
             "count": 0,
             "metrics": {
@@ -125,6 +145,7 @@ def get_summary() -> dict:
     month_expense = sum(abs(v) for v in month_values if v < 0)
 
     return {
+        **extended,
         "period": period,
         "count": len(records),
         "metrics": {
@@ -146,63 +167,3 @@ def get_summary() -> dict:
         },
         "trend": calculate_trend(records),
     }
-
-
-def get_transaction_summary(
-    start_date: str | None = None,
-    end_date: str | None = None,
-    category: str | None = None,
-) -> dict:
-    """PRD 24-1. 세 파라미터 모두 선택값이다.
-
-    - category 생략: 기간(생략 시 전체 기간) 내 수입/지출/순증감/건수 + 카테고리별
-      지출 랭킹(breakdown, 지출액 내림차순).
-    - category 지정: 그 카테고리로 필터링한 지출액/건수만 반환.
-
-    get_summary()와 마찬가지로 `data` 컬렉션 전체를 fetch_all_data()로 다시 읽어
-    메모리에서 필터링한다(페이지네이션된 목록 재사용 금지, 3.6과 동일 원칙).
-    """
-    records = fetch_all_data()
-    if start_date:
-        records = [r for r in records if r["date"] >= start_date]
-    if end_date:
-        records = [r for r in records if r["date"] <= end_date]
-
-    result: dict = {}
-    if start_date:
-        result["start_date"] = start_date
-    if end_date:
-        result["end_date"] = end_date
-
-    if category:
-        matched = [r for r in records if r.get("category") == category]
-        result["category"] = category
-        result["expense"] = sum(abs(r["value"]) for r in matched)
-        result["count"] = len(matched)
-        return result
-
-    incomes = [r["value"] for r in records if r["value"] > 0]
-    expenses = [r["value"] for r in records if r["value"] < 0]
-    income = sum(incomes)
-    expense = sum(abs(v) for v in expenses)
-
-    by_category: dict[str, dict] = {}
-    for r in records:
-        cat = r.get("category")
-        if cat is None:
-            continue
-        entry = by_category.setdefault(cat, {"category": cat, "expense": 0, "count": 0})
-        entry["expense"] += abs(r["value"])
-        entry["count"] += 1
-    breakdown = sorted(by_category.values(), key=lambda e: e["expense"], reverse=True)
-
-    result.update(
-        {
-            "income": income,
-            "expense": expense,
-            "net": income - expense,
-            "count": len(records),
-            "breakdown": breakdown,
-        }
-    )
-    return result

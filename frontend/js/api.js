@@ -41,7 +41,7 @@ const Api = (function () {
     } catch (e) {
       // 본문이 JSON이 아니면 무시하고 아래 기본 메시지를 쓴다.
     }
-    throw new ApiError(res.status, detail || statusMessage(res.status));
+    throw new ApiError(res.status, typeof detail === 'string' ? detail : statusMessage(res.status));
   }
 
   function buildUrl(path, params) {
@@ -57,7 +57,7 @@ const Api = (function () {
     return url;
   }
 
-  async function request(method, path, { params, body } = {}) {
+  async function request(method, path, { params, body, download } = {}) {
     pendingCount += 1;
     if (pendingCount === 1 && onRequestStart) onRequestStart();
     try {
@@ -68,6 +68,7 @@ const Api = (function () {
         options.body = JSON.stringify(body);
       }
       const res = await fetch(url, options);
+      if (download && res.ok) return res.blob();
       return await handleResponse(res);
     } catch (err) {
       if (err instanceof ApiError) throw err;
@@ -83,6 +84,7 @@ const Api = (function () {
     ApiError,
     setRequestHooks,
     getJSON: (path, params) => request('GET', path, { params }),
+    download: (path, params) => request('GET', path, { params, download: true }),
     postJSON: (path, body) => request('POST', path, { body: body || {} }),
     putJSON: (path, body) => request('PUT', path, { body: body || {} }),
     deleteJSON: (path) => request('DELETE', path),

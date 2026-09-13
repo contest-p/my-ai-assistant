@@ -16,6 +16,9 @@ venv/
 .venv/
 __pycache__/
 *.pyc
+frontend/dist/
+*.log
+mcp_test.json
 
 # OS / 에디터
 .DS_Store

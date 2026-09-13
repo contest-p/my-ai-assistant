@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>전역 후 1년 — 내 소비를 아는 AI 비서</title>
+<script src="js/theme.js"></script>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -73,6 +74,8 @@
 
   <!-- ================= 콘텐츠 ================= -->
   <main class="content">
+    <div class="app-tools"><span>나의 소비 기록</span><button class="btn secondary" id="themeToggle" aria-pressed="false">다크 모드</button></div>
+    <div class="coldstart-note" id="coldstartNote" role="status">서버 응답을 기다리는 중이에요. 첫 연결은 1분 이상 걸릴 수 있어요.</div>
 
     <!-- ---------- 1. 채팅 화면 ---------- -->
     <section class="view active" id="view-chat">
@@ -85,15 +88,15 @@
       </div>
 
       <div class="chat-shell">
-        <div class="coldstart-note" id="coldstartNote">서버를 깨우는 중이에요. 잠시만 기다려 주세요 (최대 1분 정도 걸릴 수 있어요).</div>
-        <div class="chat-log" id="chatLog">
+        <div class="chat-context" id="chatContext" role="status">데이터 요약을 불러오는 중…</div>
+        <div class="chat-log" id="chatLog" role="log" aria-live="polite">
           <div class="msg ai" id="typingMsg" style="display:none;">
             <div class="bubble typing-bubble"><span></span><span></span><span></span></div>
           </div>
         </div>
 
         <div class="chat-input-row">
-          <input type="text" placeholder="예: 지난주엔 얼마 썼어?" id="chatInput">
+          <input type="text" aria-label="AI에게 질문" placeholder="예: 월별 지출 흐름을 알려줘" id="chatInput">
           <button class="btn" id="btnSend">전송</button>
         </div>
       </div>
@@ -116,10 +119,31 @@
       <div class="view-header">
         <div>
           <h2>데이터 요약</h2>
-          <p class="sub">GET /api/data/summary — 매 채팅 요청마다 이 값을 다시 계산해서 시스템 프롬프트에 넣어요</p>
+          <p class="sub">전체 기록을 살펴보고, 기간을 골라 소비 흐름을 비교해 보세요</p>
         </div>
       </div>
 
+      <div class="insight-toolbar">
+        <label for="periodSelect">살펴볼 기간</label>
+        <select id="periodSelect"><option value="all">전체 기간</option><option value="6">최근 6개월</option><option value="3">최근 3개월</option></select>
+        <button class="btn secondary" id="refreshSummary">새로고침</button>
+        <div class="export-actions"><label class="sr-only" for="exportFormat">다운로드 형식</label><select id="exportFormat"><option value="csv">CSV</option><option value="json">JSON</option></select><button class="btn" id="exportData">선택 기간 거래 다운로드</button></div>
+      </div>
+      <p class="sub" id="insightStatus" role="status"></p>
+      <div id="insightContent" hidden>
+        <div class="insight-grid">
+          <div class="stat-card"><div class="label">선택 기간 순저축률</div><div class="value" id="savingsRate">—</div><div class="footnote">수입 중 순증감의 비율 · 수입 0이면 계산하지 않음</div></div>
+          <div class="stat-card"><div class="label">월평균 지출</div><div class="value expense" id="monthlyAverage">—</div><div class="footnote">거래 없는 중간 월도 포함</div></div>
+          <div class="stat-card"><div class="label">지출이 가장 컸던 달</div><div class="value" id="peakMonth">—</div><div class="footnote" id="peakAmount">—</div></div>
+        </div>
+        <div class="panel chart-panel">
+          <div class="chart-heading"><div><h3>월별 수입과 지출</h3><p class="sub" id="chartPeriod"></p></div><div class="chart-legend"><span class="income-key">수입</span><span class="expense-key">지출</span></div></div>
+          <div class="chart-scroll" id="monthlyChart"></div>
+          <p class="sub">데이터의 가장 최근 월 기준입니다. 첫 달·마지막 달은 일부 날짜만 포함될 수 있어요.</p>
+          <details><summary>월별 수치를 표로 보기</summary><div class="table-scroll"><table class="data-table"><caption class="sr-only">선택 기간 월별 입출금</caption><thead><tr><th>월</th><th>수입</th><th>지출</th><th>순증감</th></tr></thead><tbody id="monthlyRows"></tbody></table></div></details>
+        </div>
+      </div>
+      <h3 class="section-label">전체 기록 요약</h3>
       <div class="hero-card">
         <div>
           <div class="hero-label" id="summaryPeriod">기간 불러오는 중…</div>
@@ -136,12 +160,12 @@
         <div class="stat-card">
           <div class="label">평균 입금액</div>
           <div class="value income" id="summaryAvgIncome">—</div>
-          <div class="footnote">total_income / income_count</div>
+          <div class="footnote">입금 거래 한 건당 평균</div>
         </div>
         <div class="stat-card">
           <div class="label">평균 지출액</div>
           <div class="value expense" id="summaryAvgExpense">—</div>
-          <div class="footnote">total_expense / expense_count</div>
+          <div class="footnote">지출 거래 한 건당 평균</div>
         </div>
         <div class="stat-card">
           <div class="label">최대 거래</div>
@@ -175,7 +199,7 @@
       <div class="view-header">
         <div>
           <h2>거래 내역</h2>
-          <p class="sub">CRUD · date / value / memo 형태로 관리해요</p>
+          <p class="sub">기록을 추가하거나 수정하면 다음 요약에 바로 반영돼요</p>
         </div>
         <button class="btn" id="btnAddRow">+ 거래 추가</button>
       </div>
@@ -184,12 +208,12 @@
         <span class="count" id="dataTableCount">불러오는 중…</span>
       </div>
 
-      <table class="data-table">
+      <div class="table-scroll"><table class="data-table">
         <thead>
           <tr><th>날짜</th><th>내용</th><th>카테고리</th><th style="text-align:right;">금액</th><th></th></tr>
         </thead>
         <tbody id="dataTableBody"></tbody>
-      </table>
+      </table></div>
 
       <div class="pagination" id="pagination"></div>
     </section>
@@ -199,19 +223,20 @@
 
 <!-- ================= 거래 추가/수정 모달 ================= -->
 <div class="modal-overlay" id="modalOverlay">
-  <div class="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <h3 id="modalTitle">거래 추가</h3>
     <div class="field">
-      <label>날짜</label>
+      <label for="fieldDate">날짜</label>
       <input type="date" id="fieldDate">
     </div>
     <div class="field">
-      <label>내용 (memo)</label>
+      <label for="fieldMemo">내용</label>
       <input type="text" id="fieldMemo" placeholder="예: 체크카드 · 편의점">
     </div>
     <div class="field">
-      <label>카테고리 (선택)</label>
+      <label for="fieldCategory">카테고리 (선택)</label>
       <select id="fieldCategory">
+        <option value="">미분류</option>
         <option>카드결제</option>
         <option>계좌이체</option>
         <option>현금인출</option>
@@ -221,7 +246,7 @@
       </select>
     </div>
     <div class="field">
-      <label>금액 (value · 지출은 음수)</label>
+      <label for="fieldValue">금액 · 지출은 음수</label>
       <input type="number" id="fieldValue" placeholder="예: -4600">
     </div>
     <div class="modal-actions">
@@ -231,10 +256,11 @@
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status"></div>
 
 <script src="js/config.js"></script>
 <script src="js/api.js"></script>
+<script src="js/insights.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

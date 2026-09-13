@@ -40,7 +40,7 @@
 8. Vercel 프론트엔드 배포
 9. README 및 제출 스크린샷
 
-선택 사항인 Function Calling 및 추가 UX 기능은 기본 기능 구현 이후 보너스로 진행한다.
+선택 보너스는 인사이트·UX 고도화(시각화·내보내기·기간 선택·다크 모드)로 진행한다.
 
 ---
 
@@ -169,7 +169,7 @@ data
 
 # 7. Category 정의
 
-`category`는 기본 CRUD의 핵심 필수 입력값이 아니라 **분석 및 Function Calling 보너스용 분류 정보**다.
+`category`는 기본 CRUD의 핵심 필수 입력값이 아니라 **분석용 분류 정보**다.
 
 ## 7-1. 초기 category 매핑
 
@@ -325,6 +325,9 @@ end_date   선택
   "memo": "체크카드 결제 · 편의점(수정)"
 }
 ```
+
+필수 필드 date/value/memo는 생략할 수 있으나 명시적인 null로 삭제할 수 없다.
+category는 null로 미분류 상태로 바꿀 수 있다.
 
 수정 가능한 필드:
 
@@ -857,124 +860,40 @@ HTTP 404, "대화를 찾을 수 없습니다"
 
 ---
 
-# 24. Function Calling 보너스 설계
+# 24. 보너스 — 인사이트·UX 고도화
 
-Function Calling은 기본 미션 완료 이후 구현한다.
+2026-09-13 사용자 승인으로 Function Calling·MCP 보너스를 종료하고 미션 소개의
+두 번째 보너스를 선택한다. 기본 채팅은 최신 summary를 프롬프트에 주입한다.
 
-## 24-1. Tool — 카테고리·기간 통합 조회
+## 24-1. 확장 summary
 
-> **2026-09-13 재설계**: 원래 `get_category_expense`(카테고리별, 전체기간 고정)와
-> `get_period_summary`(기간별, 카테고리 구분 없음) 두 도구로 나눠뒀었는데, 실사용
-> 질문 패턴("작년 11월엔 뭘 제일 많이 썼어?")을 보니 **기간 + 카테고리가 동시에
-> 필요한 질문**이 있었다. 두 도구 중 어느 것도 단독으로 못 푸는 문제라, 하나로
-> 합친다 — 파라미터 3개 다 선택값으로 두고 조합에 따라 다르게 동작하게 한다.
+`GET /api/data/summary`는 기존 필드를 유지하고 `monthly`와 `insights`를 추가한다.
+전체 거래는 요청당 한 번 조회하고, 동일 데이터로 모든 지표를 계산한다(요청 간 캐싱 없음).
+- monthly: 날짜 오름차순의 `{month, income, expense, net, count}` 배열. 거래 없는 중간 월은 0.
+- insights.savings_rate: 순증감 / 총 수입 × 100, 소수 1자리. 수입 0이면 null.
+  투자 수익률이 아니며 입출금 기록의 순저축률이다. 음수 가능.
+- insights.average_monthly_expense: 월별 지출 평균(거래 없는 중간 월 포함).
+- insights.peak_expense_month: 최대 지출 월과 금액. 지출 없으면 null, 동률은 빠른 월.
+- generated_at: 서버 UTC 계산 시각.
 
-Tool 이름:
+## 24-2. 시각화·선택 UI·다크 모드
 
-```text
-get_transaction_summary
-```
+월별 수입·지출 막대그래프와 같은 수치의 접근 가능한 표를 제공한다.
+전체/최근 6개월/최근 3개월 선택은 데이터 최신월 기준이며 그래프·선택 기간 지표에 적용한다.
+전체 summary 카드와 선택 기간 카드를 명확히 구분한다. 빈 데이터·실패·로딩 상태를 표시한다.
+다크 모드 버튼, 시스템 기본 테마, 사용자의 선택을 localStorage에 보존한다.
 
-### Input
+## 24-3. 내보내기
 
-```json
-{
-  "start_date": "2025-11-01",
-  "end_date": "2025-11-30",
-  "category": "카드결제"
-}
-```
+`GET /api/data/export?format=csv|json&months=all|6|3`는 해당 기간의 모든 거래를
+최신 조회해 다운로드한다(현재 목록 페이지만 내보내지 않음). 기간은 데이터 최신월 기준.
+필드: id/date/value/memo/category. CSV는 UTF-8 BOM과 표준 인용 처리, 텍스트 필드의
+스프레드시트 수식 실행 방지. JSON은 원래 타입과 null 보존. 원본 개인정보를 재조회하지 않는다.
 
-세 파라미터 모두 **선택**이다.
+## 24-4. 완료 기준
 
-- `start_date`/`end_date`: 10번 섹션과 동일하게 양 끝 포함. 하나만 줘도 되고(예: `start_date`만
-  → 그 날짜부터 최신까지), 둘 다 생략하면 전체 기간.
-- `category`: 7-1 매핑표의 값만 허용하는 **enum**(자유 문자열 금지, `strict` 모드로 강제).
-  생략하면 전체 카테고리 집계(`breakdown`)를 반환한다.
-
-각 enum 값 설명(사용자 언어 → 카테고리 매핑용, 예: "체크카드"를 보고 "카드결제"를
-고르게 함):
-
-| enum 값 | 설명 |
-|---|---|
-| `카드결제` | 체크카드·신용카드·국민카드로 결제한 거래 |
-| `계좌이체` | 오픈뱅킹·전자금융 등 계좌 간 이체 |
-| `현금인출` | ATM 등 현금 출금 |
-| `급여` | 급여 입금 |
-| `이자` | 결산이자 입금 |
-| `기타입금` | 위에 해당하지 않는 입금 |
-
-**세 파라미터를 전부 생략해서 호출하지 않는다** — 그러면 이미 시스템 프롬프트에
-주입된 전체 요약(13번)과 완전히 같은 내용이라 호출할 이유가 없다. tool description에
-이 점을 명시해서 GPT가 불필요하게 호출하지 않게 한다.
-
-### Output
-
-`category` 생략 시(기간 내 전체 카테고리 랭킹 — "뭘 제일 많이 썼어?" 류):
-
-```json
-{
-  "start_date": "2025-11-01",
-  "end_date": "2025-11-30",
-  "income": 1200000,
-  "expense": 850000,
-  "net": 350000,
-  "count": 42,
-  "breakdown": [
-    { "category": "카드결제", "expense": 500000, "count": 30 },
-    { "category": "계좌이체", "expense": 300000, "count": 10 },
-    { "category": "현금인출", "expense": 50000, "count": 2 }
-  ]
-}
-```
-
-`category` 지정 시(특정 카테고리만 — "카드결제로 얼마 썼어?" 류):
-
-```json
-{
-  "start_date": "2025-11-01",
-  "end_date": "2025-11-30",
-  "category": "카드결제",
-  "expense": 500000,
-  "count": 30
-}
-```
-
-날짜를 안 줬으면 `start_date`/`end_date`는 응답에서 생략(=전체 기간이라는 뜻).
-
-### 사용 예
-
-```text
-1달 전엔 얼마 썼어?              → start_date/end_date만 지정 (category 생략)
-작년 11월엔 뭘 제일 많이 썼어?    → start_date/end_date 지정 + category 생략(breakdown에서 1위 근거로 답)
-체크카드로 제일 많이 나간 게 뭐야? → start_date/end_date 생략, category도 생략(전체기간 랭킹)
-카드결제로 11월에 얼마 썼어?      → start_date/end_date + category 둘 다 지정
-```
-
-("이번 달" 질문은 13번의 `current_month`로 기본 요약만으로 이미 답변되므로, 이
-도구는 그 외의 기간/카테고리 질문에서만 실제로 호출된다.)
-
-## 24-3. 보너스 검증 기준
-
-단순히 함수가 존재하는 것으로 PASS하지 않는다.
-
-다음 흐름이 실제로 확인되어야 한다.
-
-```text
-사용자 질문
- ↓
-GPT가 Tool 필요성 판단
- ↓
-Function Calling 발생
- ↓
-Backend Tool 실행
- ↓
-Firestore 조회
- ↓
-Tool 결과 GPT 전달
- ↓
-최종 답변
-```
+추가 지표 계산, 그래프·표·기간 선택, CSV/JSON, 다크 모드 유지, 모바일 화면을 검증한다.
+로컬 검증과 실제 Render/Vercel 배포 검증은 별도로 기록한다.
 
 ---
 
@@ -990,15 +909,15 @@ Pydantic을 사용하여 API 요청 데이터를 검증한다.
 YYYY-MM-DD
 ```
 
-형식만 허용한다.
+형식과 실제 달력에 존재하는 날짜만 허용한다.
 
 ### value
 
-숫자 타입이어야 한다.
+유한한 숫자 타입이어야 한다(NaN·무한대 불허).
 
 ### memo
 
-빈 문자열을 허용하지 않는다.
+빈 문자열과 공백만 있는 문자열을 허용하지 않는다.
 
 ### category
 
@@ -1076,9 +995,9 @@ ALLOWED_ORIGINS
 상태라 재검증 없이 유지하기로 결정). 코드에는 여전히 하드코딩하지 않고 환경변수로만
 주입한다.
 
-프론트 설정값: `frontend/js/config.js`의 `API_BASE_URL`. Render 배포 URL로 직접
-변경한 후 커밋·재배포한다. 이 공개 API 주소는 백엔드 환경변수와 구분한다(빌드 과정이
-없는 바닐라 JS라 Vercel 환경변수로는 주입되지 않음 — 9번 Task 9-3 참고).
+프론트는 Vercel의 `API_BASE_URL` 환경변수를 `frontend/build.mjs`에서 읽어
+`dist/js/config.js`로 생성한다. 공개 API 주소만 포함하며 비밀키는 넣지 않는다.
+로컬 직접 실행은 `frontend/js/config.js`를 사용한다.
 
 백엔드 환경변수 값은 GitHub에 커밋하지 않는다.
 
@@ -1192,9 +1111,11 @@ OpenAI API 호출 비용을 고려하여 `/api/chat`에 출력 토큰 제한을 
 예:
 
 ```text
-max_tokens = 500
+max_tokens = 1200
 ```
 
+빈 length 응답에 한해 max_tokens=2400으로 1회 재시도한다. 그 후에도 비어 있으면
+안내 문구를 반환한다. 완화책이며 모델의 실제 정상 답변을 보장하지는 않는다.
 개발 단계에서는 테스트 질문과 작은 데이터셋으로 먼저 검증한다.
 
 ---
@@ -1275,8 +1196,9 @@ https://<backend-domain>/docs
 
 Vercel
 
-`frontend/js/config.js`의 `API_BASE_URL`을 Render 배포 URL(https)로 직접 변경한 후
-커밋·재배포한다. 빌드 과정 없는 정적 사이트이므로 Vercel 환경변수로 주입하지 않는다.
+Vercel Root Directory=`frontend`, Framework=`Other`, Build Command=`node build.mjs`,
+Output Directory=`dist`. `API_BASE_URL`에 Render HTTPS 주소를 설정한다.
+빌드는 설정 파일 생성과 정적 파일 복사만 수행한다(바닐라 JS 유지).
 
 ---
 
@@ -1321,8 +1243,8 @@ FIREBASE_SERVICE_ACCOUNT_JSON
 ALLOWED_ORIGINS
 ```
 
-프론트 설정값은 `frontend/js/config.js`의 `API_BASE_URL`이며, Render 배포 URL로
-직접 변경 후 커밋·재배포하는 방법을 명시한다. 모델명은 `gpt-5.5`로 확정됐다.
+프론트 설정은 Vercel `API_BASE_URL` 환경변수와 `node build.mjs`에 의한 생성 절차를
+명시한다. 로컬 직접 실행 시 `frontend/js/config.js`를 사용한다. 모델은 `gpt-5.5`다.
 
 ## 개인정보 처리
 
@@ -1428,22 +1350,14 @@ CRUD 중 최소 1개 동작이 실제 수행된 장면.
 | README | 35 | ✅ |
 | 스크린샷 | 36 | ✅ |
 | 최소 100개 데이터 | 29 | ✅ |
-| Function Calling | 24 | 🟡 보너스 |
+| 인사이트·UX 고도화 | 24 | 로컬 구현·검증 / 배포 대기 |
 
 ---
 
-# 39. 보너스 범위
+# 39. 보너스 선택 범위
 
-기본 미션 완료 이후 다음 기능을 선택적으로 구현한다.
-
-1. Function Calling
-2. MCP Server 또는 GPT Actions 연동
-3. 카테고리별 상세 분석
-4. 그래프 시각화
-5. CSV/JSON 내보내기
-6. 다크 모드
-
-보너스 기능은 기본 기능의 안정성을 해치지 않는 범위에서 진행한다.
+선택: 순저축률·월별 지표, 월별 그래프, 기간 선택, CSV/JSON 내보내기, 다크 모드.
+Function Calling·MCP·GPT Actions는 이번 제출 범위에서 제외한다.
 
 ---
 

@@ -100,6 +100,7 @@
   const btnSend = document.getElementById('btnSend');
   const typingMsg = document.getElementById('typingMsg');
   let conversationId = null;
+  let chatPending = false;
 
   function appendMessage(role, html, isError) {
     const wrap = document.createElement('div');
@@ -118,7 +119,9 @@
 
   async function sendMessage() {
     const text = chatInput.value.trim();
-    if (!text) return;
+    if (!text || chatPending) return;
+    chatPending = true;
+    document.getElementById("btnNewChat").disabled = true;
     appendMessage('user', escapeHtml(text));
     chatInput.value = '';
     btnSend.disabled = true;
@@ -138,13 +141,15 @@
     } finally {
       typingMsg.style.display = 'none';
       btnSend.disabled = false;
+      chatPending = false;
+      document.getElementById("btnNewChat").disabled = false;
       chatLog.scrollTop = chatLog.scrollHeight;
     }
   }
 
   btnSend.addEventListener('click', sendMessage);
   chatInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') sendMessage();
+    if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); sendMessage(); }
   });
 
   document.getElementById('btnNewChat').addEventListener('click', () => {
@@ -153,6 +158,7 @@
   });
 
   function openConversationInChat(conversation) {
+    if (chatPending) { showToast("답변이 끝난 뒤 대화를 바꿔 주세요."); return; }
     conversationId = conversation.id;
     clearChat();
     (conversation.messages || []).forEach((m) => {
@@ -222,12 +228,20 @@
 
   /* ---------- 5. 데이터 요약 (8.6) ---------- */
 
+  let summaryPending = false;
   async function loadSummary() {
+    if (summaryPending) return;
+    summaryPending = true;
+    Insights.loading();
+    document.getElementById("refreshSummary").disabled = true;
+    document.querySelectorAll("#view-summary .value, #summaryNet, #summaryCount, #summaryIncome, #summaryExpense, #summaryMonthIncome, #summaryMonthExpense, #summaryMonthNet").forEach(el => { el.textContent = "—"; });
     document.getElementById('summaryPeriod').textContent = '기간 불러오는 중…';
     document.getElementById('summaryTrend').textContent = '불러오는 중…';
     try {
       const s = await Api.getJSON('/api/data/summary');
       const m = s.metrics;
+      Insights.update(s);
+      updateChatContext(s);
 
       document.getElementById('summaryPeriod').textContent = (s.period || '기간 정보 없음') + ' · 전체 순증감';
       const netEl = document.getElementById('summaryNet');
@@ -256,9 +270,23 @@
       if (s.trend && s.trend.includes('증가')) trendEl.classList.add('up');
       else if (s.trend && s.trend.includes('감소')) trendEl.classList.add('down');
     } catch (err) {
-      document.getElementById('summaryPeriod').textContent = '요약을 불러오지 못했어요: ' + err.message;
+      document.getElementById('summaryPeriod').textContent = '요약을 불러오지 못했어요';
+      Insights.error(err.message);
+    } finally {
+      summaryPending = false;
+      document.getElementById('refreshSummary').disabled = false;
     }
   }
+
+  document.getElementById('refreshSummary').addEventListener('click', loadSummary);
+  function updateChatContext(s) {
+    document.getElementById('chatContext').textContent = s.count
+      ? `${s.period} · ${s.count.toLocaleString()}건 · 총 지출 ${wonPlain(s.metrics.total_expense)}`
+      : '아직 거래가 없어요. 거래 내역에서 기록을 추가해 주세요.';
+  }
+  Api.getJSON('/api/data/summary').then(updateChatContext).catch(() => {
+    document.getElementById('chatContext').textContent = '요약을 불러오지 못했어요. 질문할 때 최신 데이터를 다시 확인합니다.';
+  });
 
   /* ---------- 6. 거래 내역 · 데이터 관리 (8.4) ---------- */
 
@@ -274,6 +302,7 @@
     try {
       const res = await Api.getJSON('/api/data', { limit: PAGE_SIZE, offset: page * PAGE_SIZE });
       currentTotalCount = res.count;
+      if (page > 0 && page * PAGE_SIZE >= res.count) { await loadDataPage(Math.max(0, Math.ceil(res.count / PAGE_SIZE) - 1)); return; }
       renderDataTable(res.items);
       renderPagination();
     } catch (err) {
@@ -360,18 +389,24 @@
     if (item) {
       fieldDate.value = item.date;
       fieldMemo.value = item.memo;
-      fieldCategory.value = CATEGORY_OPTIONS.includes(item.category) ? item.category : CATEGORY_OPTIONS[0];
+      fieldCategory.querySelectorAll('[data-custom]').forEach(el => el.remove());
+      if (item.category && !CATEGORY_OPTIONS.includes(item.category)) {
+        const option = new Option(item.category, item.category); option.dataset.custom = 'true'; fieldCategory.add(option);
+      }
+      fieldCategory.value = item.category || '';
       fieldValue.value = item.value;
     } else {
       fieldDate.value = todayISO();
       fieldMemo.value = '';
-      fieldCategory.value = CATEGORY_OPTIONS[0];
+      fieldCategory.value = '';
       fieldValue.value = '';
     }
     overlay.classList.add('show');
+    fieldDate.focus();
   }
 
   function closeModal() {
+    if (saving) return;
     overlay.classList.remove('show');
     editingItem = null;
   }
@@ -382,32 +417,43 @@
     if (e.target === overlay) closeModal();
   });
 
+  let saving = false;
   document.getElementById('btnModalSave').addEventListener('click', async () => {
+    if (saving) return;
     const date = fieldDate.value;
     const memo = fieldMemo.value.trim();
-    const category = fieldCategory.value;
+    const category = fieldCategory.value || null;
     const value = Number(fieldValue.value);
 
-    if (!date || !memo || Number.isNaN(value) || fieldValue.value.trim() === '') {
+    if (!date || !memo || !Number.isFinite(value) || fieldValue.value.trim() === '') {
       showToast('날짜 · 내용 · 금액을 모두 입력해주세요.');
       return;
     }
 
     const payload = { date, value, memo, category };
+    saving = true;
+    document.getElementById("btnModalSave").disabled = true;
+    document.getElementById("btnModalCancel").disabled = true;
     try {
       if (editingItem) {
         await Api.putJSON('/api/data/' + editingItem.id, payload);
         showToast('거래를 수정했어요.');
+        saving = false;
         closeModal();
         await loadDataPage(currentPage);
       } else {
         await Api.postJSON('/api/data', payload);
         showToast('새 거래를 추가했어요.');
+        saving = false;
         closeModal();
         await loadDataPage(0);
       }
     } catch (err) {
       showToast(err.message);
+    } finally {
+      saving = false;
+      document.getElementById("btnModalSave").disabled = false;
+      document.getElementById("btnModalCancel").disabled = false;
     }
   });
 })();

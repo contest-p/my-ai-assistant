@@ -1,7 +1,9 @@
-from fastapi import APIRouter, HTTPException, Query
+from typing import Literal
+
+from fastapi import APIRouter, HTTPException, Query, Response
 
 from models.schemas import DataCreate, DataUpdate
-from services import analysis_service, firestore_service
+from services import analysis_service, export_service, firestore_service
 
 router = APIRouter(prefix="/api/data", tags=["data"])
 
@@ -33,6 +35,15 @@ def list_data(
 @router.get("/summary")
 def get_summary():
     return analysis_service.get_summary()
+
+
+@router.get("/export")
+def export_data(format: Literal["csv", "json"] = "csv", months: Literal["all", "6", "3"] = "all"):
+    content, media_type = export_service.export_data(format, months)
+    return Response(content=content, media_type=media_type, headers={
+        "Content-Disposition": f'attachment; filename="transactions-{months}.{format}"',
+        "Cache-Control": "no-store",
+    })
 
 
 @router.put("/{data_id}")

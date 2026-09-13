@@ -4,7 +4,6 @@ import os
 import firebase_admin
 from dotenv import load_dotenv
 from firebase_admin import credentials, firestore
-from mcp.server.transport_security import TransportSecuritySettings
 
 # .env 파일을 읽어서 os.environ에 채워 넣습니다.
 # 배포 환경(Render)에서는 .env 파일이 없고 대시보드에 등록한 환경변수를 바로 쓰므로,
@@ -47,24 +46,3 @@ if not firebase_admin._apps:
 
 # 다른 모듈(routers/services/scripts)은 여기서 db를 가져다 쓴다.
 db = firestore.client()
-
-# Phase 10(보너스, MCP Server) — Task 10.5/10.6.
-# 공유 비밀키. Render 배포 URL(https://my-ai-assistant-bogq.onrender.com)에 등록되지 않은
-# 값이면 mcp_server.SharedSecretAuthMiddleware가 모든 /mcp 요청을 401로 막는다
-# (미등록 상태를 "인증 통과"로 잘못 처리하는 것보다 안전한 기본값 — fail closed).
-MCP_SHARED_SECRET = os.getenv("MCP_SHARED_SECRET")
-
-# mcp 패키지(streamable_http_app)는 배포된 실제 호스트가 Host allowlist에 없으면
-# DNS 리바인딩 방지 차원에서 모든 요청을 421로 거부한다(로컬 개발 기본값은 localhost뿐).
-# Render 배포 도메인은 이미 확정되어 있으므로 기본값에 포함하되, 도메인이 바뀌는 경우를
-# 대비해 환경변수로 덮어쓸 수 있게 한다.
-_DEFAULT_MCP_ALLOWED_HOSTS = (
-    "127.0.0.1,127.0.0.1:*,localhost,localhost:*,"
-    "my-ai-assistant-bogq.onrender.com,my-ai-assistant-bogq.onrender.com:*"
-)
-
-
-def mcp_transport_security() -> TransportSecuritySettings:
-    raw = os.getenv("MCP_ALLOWED_HOSTS", _DEFAULT_MCP_ALLOWED_HOSTS)
-    hosts = [h.strip() for h in raw.split(",") if h.strip()]
-    return TransportSecuritySettings(allowed_hosts=hosts, allowed_origins=[])
