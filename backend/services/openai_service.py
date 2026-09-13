@@ -1,12 +1,61 @@
+import json
+
 from openai import OpenAI
 
 import config
+from services import analysis_service
 
 # 코디세이 프록시(sk-cody-live- 키)는 base_url을 넘기지 않으면 기본값인 api.openai.com으로
 # 요청이 나가서 실패한다 (PRD 27, Task 6.1).
 _client = OpenAI(api_key=config.OPENAI_API_KEY, base_url=config.OPENAI_BASE_URL)
 
 MAX_TOKENS = 500
+MAX_TOOL_ROUNDS = 3  # 방어적 상한 — 정상 흐름에서는 1라운드면 끝난다.
+
+# PRD 24-1 (2026-09-13 재설계: 카테고리·기간 통합 조회). analysis_service.get_transaction_summary()를
+# 그대로 호출하는 tool 정의 — Phase 10의 MCP tool과 같은 계산 로직을 공유한다.
+_CATEGORY_ENUM_LINES = "\n".join(
+    f"  - {name}: {desc}" for name, desc in analysis_service.CATEGORY_DESCRIPTIONS.items()
+)
+TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_transaction_summary",
+            "description": (
+                "특정 기간 및/또는 카테고리로 거래를 집계해서 조회한다. "
+                "start_date, end_date, category는 전부 선택값이다. "
+                "이미 시스템 프롬프트에 전체 기간 요약(총 수입/지출/순증감/평균/이번 달/추세)이 "
+                "들어있으므로, 세 값을 모두 생략해서 호출하지 않는다 — 그 경우는 이미 아는 정보와 "
+                "완전히 같다. '이번 달'은 시스템 프롬프트의 이번 달 정보로 이미 답변 가능하니 이 "
+                "도구를 쓰지 않는다. 그 외 임의 기간 질문('1달 전', '작년 11월' 등)이나 특정 "
+                "카테고리 질문에만 사용한다.\n"
+                "category enum 값과 의미(사용자 언어 → 이 값으로 매핑):\n" + _CATEGORY_ENUM_LINES
+            ),
+            "strict": True,
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "start_date": {
+                        "type": ["string", "null"],
+                        "description": "조회 시작일 YYYY-MM-DD(포함). 생략하면 전체 기간 시작부터.",
+                    },
+                    "end_date": {
+                        "type": ["string", "null"],
+                        "description": "조회 종료일 YYYY-MM-DD(포함). 생략하면 최신 거래일까지.",
+                    },
+                    "category": {
+                        "type": ["string", "null"],
+                        "enum": analysis_service.CATEGORY_VALUES,
+                        "description": "특정 카테고리만 조회할 때만 지정. 생략하면 카테고리별 지출 랭킹을 반환.",
+                    },
+                },
+                "required": ["start_date", "end_date", "category"],
+                "additionalProperties": False,
+            },
+        },
+    }
+]
 
 # PRD 22번 시스템 프롬프트 템플릿 그대로. {current_month_label}은 PRD의
 # `{current_month.month}` 표기를 실제 str.format() 키로 옮긴 것이다.
@@ -61,6 +110,16 @@ def build_system_prompt(summary: dict) -> str:
     )
 
 
+def _run_tool_call(tool_call) -> str:
+    args = json.loads(tool_call.function.arguments)
+    result = analysis_service.get_transaction_summary(
+        start_date=args.get("start_date"),
+        end_date=args.get("end_date"),
+        category=args.get("category"),
+    )
+    return json.dumps(result, ensure_ascii=False)
+
+
 def ask(system_prompt: str, history: list[dict], user_message: str) -> str:
     """history: 기존 대화의 messages 배열(role/content만 사용). 신규 대화면 빈 리스트."""
     messages = [{"role": "system", "content": system_prompt}]
@@ -70,9 +129,30 @@ def ask(system_prompt: str, history: list[dict], user_message: str) -> str:
             messages.append({"role": role, "content": m.get("content", "")})
     messages.append({"role": "user", "content": user_message})
 
-    response = _client.chat.completions.create(
-        model=config.OPENAI_MODEL,
-        messages=messages,
-        max_tokens=MAX_TOKENS,
+    for _ in range(MAX_TOOL_ROUNDS):
+        response = _client.chat.completions.create(
+            model=config.OPENAI_MODEL,
+            messages=messages,
+            max_tokens=MAX_TOKENS,
+            tools=TOOLS,
+        )
+        message = response.choices[0].message
+
+        if not message.tool_calls:
+            return message.content
+
+        messages.append(message.model_dump(exclude_none=True))
+        for tool_call in message.tool_calls:
+            messages.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": tool_call.id,
+                    "content": _run_tool_call(tool_call),
+                }
+            )
+
+    # 방어적 상한(MAX_TOOL_ROUNDS)에 걸린 경우 — 정상 흐름에서는 도달하지 않는다.
+    final = _client.chat.completions.create(
+        model=config.OPENAI_MODEL, messages=messages, max_tokens=MAX_TOKENS
     )
-    return response.choices[0].message.content
+    return final.choices[0].message.content

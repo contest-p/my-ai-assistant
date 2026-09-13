@@ -65,6 +65,21 @@
   9.5 검증 결과 32개 중 31개 PASS, 나머지 1개(README/스크린샷 개인정보 미노출)는 9.6
   완료 후 재확인해서 PASS로 전환
   — 실패 항목 없음. 사실상 핵심 미션(Phase 1~9) 기능 요구사항 충족.
+- Phase 10(보너스, 진행 중): Task.md에 "Function Calling은 Phase 6에서 이미 구현 완료"라고
+  적혀 있던 게 사실이 아니었음을 확인(검증 없이 쓴 문장). 10.1(실제 Function Calling
+  추가)·10.3(MCP 서버 `/mcp` 마운트)·10.4(get_transaction_summary를 MCP tool로 노출,
+  10.1과 같은 analysis_service 함수 재사용)·10.5(공유 비밀키 인증) 구현 완료. 10.5는
+  처음엔 헤더(`X-MCP-Secret`) 방식이었는데, Claude.ai의 헤더 인증(`static_headers`)이
+  조직 관리자용 beta 기능이라 무료/개인 플랜엔 안 뜰 가능성이 높다는 지적을 반영해
+  URL 쿼리 파라미터 방식(`/mcp?key=<MCP_SHARED_SECRET>`)으로 변경. MCP tool 호출은
+  로컬에서 실제 Firestore 데이터로 종단 검증됨(1,116건
+  일치). requirements.txt에 `mcp==2.2.0` 추가(pip freeze 결과에 섞여 있던 Playwright
+  계열 패키지는 런타임 무관이라 제외, `pywin32`는 `sys_platform == "win32"` 마커를
+  되살림 — 안 하면 Render(Linux) 배포가 깨짐). 10.2(챗봇 통합 테스트)는 tool_calls
+  발생까지는 로그로 확인했으나 Firestore 쓰기 쿼터가 테스트 중 소진되어 저장 단계까지
+  는 재확인 필요(코드 문제 아님, Firebase 무료 플랜 쿼터 소진). 10.6(Render에
+  `MCP_SHARED_SECRET` 환경변수 등록 + 재배포)은 사용자가 직접 진행해야 함. 10.7(Claude.ai
+  커스텀 커넥터 연결)·10.8(README 반영)은 아직 시작 전.
 
 ## 개발 순서
 

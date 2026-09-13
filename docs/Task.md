@@ -1,7 +1,7 @@
 # Task.md — 개발 작업 분해
 
 > 기준 문서: `PRD.md`, `기술스택.md`
-> 총 Phase 9개(핵심 기능) + Phase 10(보너스, 범위 밖 — 별도 사이클)
+> 총 Phase 10개(핵심 기능 1~9 + 보너스 10)
 > 이 문서의 상단 체크리스트는 **진행 상황 공유용**입니다. 각 항목을 "Phase.Task 번호"로
 > 하단 "상세 스펙"과 연결했으니, 다음 세션에서는 번호만 보고 해당 섹션으로 바로 가면 됩니다.
 > 작업 순서는 위에서 아래로 진행하는 걸 기본으로 하되, Phase 1~2는 한 번만 하면 되는
@@ -12,53 +12,53 @@
 ## 전체 체크리스트
 
 ### Phase 1. 프로젝트 초기 설정
-- [x] 1.1 GitHub 저장소 생성 (단일 repo, `backend/` + `frontend/`)
-- [x] 1.2 backend 폴더 뼈대 생성 (routers/services/models 분리)
-- [x] 1.3 Python 3.11 가상환경 구성 + 패키지 설치
-- [x] 1.4 Firebase 프로젝트 생성 + Firestore 활성화 + 서비스 계정 키 발급
-- [x] 1.5 OpenAI API 키 발급
-- [x] 1.6 FastAPI 앱 초기화 (CORS `*`, 헬스체크)
-- [x] 1.7 로컬 실행 + Swagger(`/docs`) 확인
+- [ ] 1.1 GitHub 저장소 생성 (단일 repo, `backend/` + `frontend/`)
+- [ ] 1.2 backend 폴더 뼈대 생성 (routers/services/models 분리)
+- [ ] 1.3 Python 3.11 가상환경 구성 + 패키지 설치
+- [ ] 1.4 Firebase 프로젝트 생성 + Firestore 활성화 + 서비스 계정 키 발급
+- [ ] 1.5 OpenAI API 키 발급
+- [ ] 1.6 FastAPI 앱 초기화 (CORS `*`, 헬스체크)
+- [ ] 1.7 로컬 실행 + Swagger(`/docs`) 확인
 
 ### Phase 2. Firestore 연동 + 초기 데이터 적재
-- [x] 2.1 firebase-admin 초기화 (`config.py`)
-- [x] 2.2 `KB_거래내역_비식별화.xlsx` → (date, value, memo, category) 변환 스크립트
-- [x] 2.3 category 매핑 로직 구현
-- [x] 2.4 Firestore `data` 컬렉션 bulk upload
-- [x] 2.5 적재 검증 (1,116건, 입금+출금=1,116건)
+- [ ] 2.1 firebase-admin 초기화 (`config.py`)
+- [ ] 2.2 `KB_거래내역_비식별화.xlsx` → (date, value, memo, category) 변환 스크립트
+- [ ] 2.3 category 매핑 로직 구현
+- [ ] 2.4 Firestore `data` 컬렉션 bulk upload
+- [ ] 2.5 적재 검증 (1,116건, 입금+출금=1,116건)
 
 ### Phase 3. 데이터 API (CRUD + Summary)
-- [x] 3.1 Pydantic 모델 정의 (`schemas.py`)
-- [x] 3.2 `POST /api/data`
-- [x] 3.3 `GET /api/data` (페이지네이션, inclusive 날짜 필터, 정렬)
-- [x] 3.4 `PUT /api/data/{id}`
-- [x] 3.5 `DELETE /api/data/{id}`
-- [x] 3.6 `GET /api/data/summary` (수입/지출/평균/최대/최소/이번달)
-- [x] 3.7 Swagger에서 5개 엔드포인트 수동 테스트
+- [ ] 3.1 Pydantic 모델 정의 (`schemas.py`)
+- [ ] 3.2 `POST /api/data`
+- [ ] 3.3 `GET /api/data` (페이지네이션, inclusive 날짜 필터, 정렬)
+- [ ] 3.4 `PUT /api/data/{id}`
+- [ ] 3.5 `DELETE /api/data/{id}`
+- [ ] 3.6 `GET /api/data/summary` (수입/지출/평균/최대/최소/이번달)
+- [ ] 3.7 Swagger에서 5개 엔드포인트 수동 테스트
 
 ### Phase 4. Trend 계산 로직
-- [x] 4.1 월별 지출 집계 함수 (거래 없는 월 = 0원)
-- [x] 4.2 최근 3개월 vs 이전 3개월 비교 구간 확정 (데이터 최신월 기준)
-- [x] 4.3 변화율 계산
-- [x] 4.4 판정 기준(±5%)
-- [x] 4.5 예외 처리 (데이터 부족 / 이전 기간 0원) + summary 연결·수동 검증
+- [ ] 4.1 월별 지출 집계 함수 (거래 없는 월 = 0원)
+- [ ] 4.2 최근 3개월 vs 이전 3개월 비교 구간 확정 (데이터 최신월 기준)
+- [ ] 4.3 변화율 계산
+- [ ] 4.4 판정 기준(±5%)
+- [ ] 4.5 예외 처리 (데이터 부족 / 이전 기간 0원) + summary 연결·수동 검증
 
 ### Phase 5. 대화 기록 API
-- [x] 5.1 Pydantic 모델 정의 (Conversation, Message)
-- [x] 5.2 `POST /api/conversations`
-- [x] 5.3 `GET /api/conversations` (메타만)
-- [x] 5.4 `GET /api/conversations/{id}` (전체 메시지)
-- [x] 5.5 `DELETE /api/conversations/{id}`
-- [x] 5.6 Swagger에서 저장→목록→불러오기→삭제 흐름 테스트
+- [ ] 5.1 Pydantic 모델 정의 (Conversation, Message)
+- [ ] 5.2 `POST /api/conversations`
+- [ ] 5.3 `GET /api/conversations` (메타만)
+- [ ] 5.4 `GET /api/conversations/{id}` (전체 메시지)
+- [ ] 5.5 `DELETE /api/conversations/{id}`
+- [ ] 5.6 Swagger에서 저장→목록→불러오기→삭제 흐름 테스트
 
 ### Phase 6. AI 챗봇 API
-- [x] 6.1 OpenAI 클라이언트 초기화 (`OPENAI_BASE_URL`, `OPENAI_MODEL` 환경변수)
-- [x] 6.2 시스템 프롬프트 조립 함수
-- [x] 6.3 `POST /api/chat` — 신규/기존 대화 분기
-- [x] 6.4 존재하지 않는 `conversation_id` 404 처리
-- [x] 6.5 GPT 호출 + `max_tokens` 제한
-- [x] 6.6 대화 자동 저장 로직
-- [x] 6.7 실제 질문으로 통합 테스트 (기본 질문 4개, PRD 23번)
+- [ ] 6.1 OpenAI 클라이언트 초기화 (`OPENAI_BASE_URL`, `OPENAI_MODEL` 환경변수)
+- [ ] 6.2 시스템 프롬프트 조립 함수
+- [ ] 6.3 `POST /api/chat` — 신규/기존 대화 분기
+- [ ] 6.4 존재하지 않는 `conversation_id` 404 처리
+- [ ] 6.5 GPT 호출 + `max_tokens` 제한
+- [ ] 6.6 대화 자동 저장 로직
+- [ ] 6.7 실제 질문으로 통합 테스트 (기본 질문 4개, PRD 23번)
 
 ### Phase 7. 백엔드 배포 (Render)
 - [ ] 7.1 `requirements.txt` 확정 (`pip freeze`)
@@ -68,38 +68,36 @@
 - [ ] 7.5 배포 URL `/docs` 확인 + 콜드스타트 체감
 
 ### Phase 8. 프론트엔드 개발
-- [x] 8.1 `mockup/` → `frontend/`로 이관 + `config.js` 추가 (mockup/은 초기 커밋 때 이미
-      frontend/에 바로 반영되어 있었음 — `config.js`만 신규 추가). 사이드바 D+n 카운터를
-      고정값 대신 `new Date()` 기준 실시간 계산으로 변경(사용자 추가 요청)
-- [x] 8.2 `api.js` (fetch 래퍼) — getJSON/postJSON/putJSON/deleteJSON, 404/422/500/502 구분
-- [x] 8.3 채팅 화면 실연동 (로딩/오류/새 대화) — `POST /api/conversations`는 호출하지 않음
-      (자동저장과 중복 방지, PRD 15번 규칙 재확인)
-- [x] 8.4 데이터 관리 화면 실연동 (목록/추가/수정/삭제) — 20건/페이지, Prev/Next 페이지네이션
-- [x] 8.5 대화 기록 화면 실연동 (목록/불러오기) — "이어서 질문하기" 버튼 추가(PRD 33-3, 목업엔
-      누락돼 있었음)
-- [x] 8.6 데이터 요약 화면 실연동 — 목업의 월별 막대그래프는 제거(summary API가 월별 세부
-      데이터를 주지 않아 실제 데이터로 채울 수 없음, trend 배지만 유지 — 사용자 확인 완료)
-- [x] 8.7 콜드스타트 안내 문구 연결 — 실측 콜드스타트(~43초) 반영해 "최대 1분 정도 걸릴 수
-      있어요"로 문구 조정(사용자 요청), API 요청 시작~종료에 맞춰 전역으로 노출/숨김
-- [x] 8.8 로컬에서 백엔드(localhost) 연동 테스트, CORS 확인 — Playwright 헤드리스 브라우저로
-      4개 화면 전부 실데이터 확인(채팅 실답변, 요약 숫자, 거래 내역 페이지네이션, 대화 기록
-      +이어서 질문하기), CRUD(추가/수정/삭제) 왕복 확인, 콘솔 에러/네트워크 실패 0건
+- [ ] 8.1 `mockup/` → `frontend/`로 이관 + `config.js` 추가
+- [ ] 8.2 `api.js` (fetch 래퍼)
+- [ ] 8.3 채팅 화면 실연동 (로딩/오류/새 대화)
+- [ ] 8.4 데이터 관리 화면 실연동 (목록/추가/수정/삭제)
+- [ ] 8.5 대화 기록 화면 실연동 (목록/불러오기)
+- [ ] 8.6 데이터 요약 화면 실연동
+- [ ] 8.7 콜드스타트 안내 문구 연결
+- [ ] 8.8 로컬에서 백엔드(localhost) 연동 테스트, CORS 확인
 
 ### Phase 9. 프론트엔드 배포 + 통합 검증
-- [x] 9.1 GitHub push
-- [x] 9.2 Vercel 배포 (Root Directory=`frontend`, Other preset) — 사용자가 대시보드에서 직접 진행
-- [x] 9.3 `frontend/js/config.js`의 `API_BASE_URL`을 Render 배포 URL로 변경 후 커밋·재배포
-- [x] 9.4 Render `ALLOWED_ORIGINS`를 Vercel 도메인으로 좁히기 — 사용자가 대시보드에서 직접
-      진행. ALLOWED_ORIGINS가 실제 Vercel 도메인으로 좁혀진 상태에서 9.5 검증 시 배포된
-      프론트(Vercel)→백엔드(Render) 채팅 호출이 CORS 에러 없이 정상 동작한 것으로 확인됨
-- [x] 9.5 PRD 37번 검증 기준 전체 재확인 (배포 URL 기준) — 32개 중 31개 PASS, 보안검증 5번은
-      9.6(README/스크린샷) 완료 후 재확인해서 PASS로 전환. 실패 항목 없음.
-- [x] 9.6 README.md 작성 + 스크린샷 3종 촬영 — `docs/screenshots/`에 저장, 실제 배포된
-      Vercel URL에서 Playwright로 캡처(채팅 Q&A / 거래 추가 / 대화 기록 불러오기), 캡처 후
-      테스트 거래·대화는 정리. README/스크린샷에 실명·계좌번호 등 노출 없음 확인.
+- [ ] 9.1 GitHub push
+- [ ] 9.2 Vercel 배포 (Root Directory=`frontend`, Other preset)
+- [ ] 9.3 `frontend/js/config.js`의 `API_BASE_URL`을 Render 배포 URL로 변경 후 커밋·재배포
+- [ ] 9.4 Render `ALLOWED_ORIGINS`를 Vercel 도메인으로 좁히기
+- [ ] 9.5 PRD 37번 검증 기준 전체 재확인 (배포 URL 기준)
+- [ ] 9.6 README.md 작성 + 스크린샷 3종 촬영
 
-### Phase 10. 보너스 — 범위 밖 (별도 Task.md-v2)
-- [ ] 10.0 Phase 1~9 배포 안정화 확인 후 별도 시나리오/PRD 보강 → 새 Task 작성
+### Phase 10. 보너스 — Function Calling + MCP Server 연동
+- [x] 10.1 `POST /api/chat`에 실제 OpenAI Function Calling 추가 (`get_transaction_summary`
+      1개, tools 파라미터·tool_call 응답 처리·재호출)
+- [ ] 10.2 실제 도구 호출 통합 테스트 (PRD 24-3 흐름, "작년 11월엔 뭘 제일 많이 썼어?" 등) —
+      로컬에서 tool_calls 발생까지는 로그로 확인, Firestore 쓰기 쿼터 소진으로 저장 단계
+      500까지 봤음(코드 문제 아님). 쿼터 회복 후 마지막 저장까지 재확인 필요.
+- [x] 10.3 MCP 서버를 기존 FastAPI 앱에 마운트 (신규 배포 없음)
+- [x] 10.4 `get_transaction_summary`를 MCP tool로 노출 (10.1의 서비스 함수 재사용)
+- [x] 10.5 최소 인증 — 공유 비밀키(URL 쿼리 파라미터 `?key=` 방식, 헤더에서 변경)
+- [ ] 10.6 환경변수 추가 등록 + 재배포 — 코드/로컬 검증 완료, Render 대시보드 등록·재배포는
+      사용자가 직접 진행
+- [ ] 10.7 Claude.ai 커스텀 커넥터로 연결, 실제 호출 흐름 검증
+- [ ] 10.8 README에 연동 방법 + 호출 흐름 정리
 
 ---
 
@@ -475,11 +473,62 @@ Framework Preset: **Other**(기술스택.md 표 참고, 빌드 커맨드 없음)
 
 ---
 
-### Phase 10. 보너스 (범위 밖)
+### Phase 10. 보너스 — Function Calling + MCP Server 연동
 
-Function Calling + 멀티채널 연동은 여기서 상세 태스크화하지 않는다. Phase 1~9 배포가
-안정적으로 끝난 뒤, PRD 39번 범위를 기준으로 별도 시나리오/PRD 보강 → Task.md-v2를
-새로 만들어 진행한다(로드맵의 "보너스 사이클" 원칙 그대로).
+**바로잡음(2026-09-14)**: 이전 버전에 "Function Calling은 Phase 6에서 이미 구현·검증
+완료"라고 적혀 있었는데 **사실이 아니다** — 검증 없이 쓴 문장이었다. Phase 6의
+`/api/chat`은 요약을 텍스트로 시스템 프롬프트에 주입하는 방식뿐이고, `tools` 파라미터를
+쓰는 실제 Function Calling은 여태 구현된 적이 없다. PRD 2번에도 애초에 "Function
+Calling은 기본 기능 이후 보너스"라고 명시돼 있었다. 아래 10.1~10.2가 그 실제 구현이다.
+
+미션 요구사항은 두 가지를 다 요구한다: (a) 챗봇 자체가 도구를 실제로 호출하는 것,
+(b) **같은 기능**을 MCP Server 같은 외부 채널에서도 쓸 수 있게 하는 것. MCP만 만들고
+(a)를 건너뛰면 미션 요구사항의 절반만 채우는 것이라 순서를 이렇게 정했다.
+
+**10.1 `POST /api/chat`에 Function Calling 추가**
+PRD 24-1의 `get_transaction_summary` 스키마(enum 포함) 그대로 OpenAI 클라이언트 호출에
+`tools` 파라미터로 전달한다. 모델이 `tool_calls`를 반환하면: 해당 서비스 함수를 실제로
+실행 → 결과를 다시 메시지 히스토리에 추가 → 모델을 한 번 더 호출해서 최종 답변을
+받는다. 이 서비스 함수(`get_transaction_summary` 계산 로직)는 `analysis_service.py`에
+새로 만들되, 기존 `get_summary()`/`calculate_trend()`를 내부적으로 재사용한다 — 로직을
+중복 구현하지 않는다.
+
+**10.2 통합 테스트**
+PRD 24-3 흐름(질문 → 도구 필요성 판단 → 실제 호출 → Firestore 조회 → 결과 반영 →
+최종 답변)이 실제로 일어나는지 확인한다. "1달 전엔 얼마 썼어?", "작년 11월엔 뭘 제일
+많이 썼어?"로 테스트 — 지난 9월 13일에 배포된 서비스로 직접 확인했던, 기본 요약만으론
+못 풀던 바로 그 질문들이다. 단순히 함수가 정의된 것만으로 PASS 처리하지 않는다 —
+실제 tool_calls가 응답에 찍히는지 로그로 확인할 것.
+
+**10.3 MCP 서버 마운트**
+Python `mcp` SDK(Streamable HTTP transport)를 기존 `main.py`의 FastAPI 앱에 마운트한다.
+새 Render 서비스를 만들지 않는다 — 같은 도메인 아래 새 경로(예: `/mcp`)로 노출한다.
+정확한 마운트 방식은 이 시점 기준 `mcp` 패키지 공식 문서로 확인할 것(추측 금지).
+
+**10.4 `get_transaction_summary`를 MCP tool로 노출**
+10.1에서 만든 같은 서비스 함수를 MCP tool 핸들러에서도 그대로 호출한다 — 계산 로직을
+또 새로 만들지 않는다.
+
+**10.5 최소 인증**
+공개 인터넷에 열리는 엔드포인트라 아무나 소비 데이터를 조회 못 하게 공유 비밀키를
+요구하고 안 맞으면 401을 반환한다. 처음엔 요청 헤더(`X-MCP-Secret`)로 구현했었는데,
+Claude.ai의 커스텀 헤더 인증(`static_headers`)이 조직(organization) 관리자용 beta
+기능으로 보이고 무료/개인 플랜의 커스텀 커넥터 설정 화면엔 아예 안 뜰 가능성이 높다는
+지적을 반영해 **URL 쿼리 파라미터 방식(`https://.../mcp?key=<MCP_SHARED_SECRET>`)**으로
+바꿨다 — 커넥터 URL 입력창 하나만 있으면 되므로 플랜 상관없이 항상 된다. 접근 로그에
+비밀키가 평문으로 남는 트레이드오프는 있지만, 개인용 조회 전용 API 1개 규모에서는
+감수하기로 결정.
+
+**10.6 환경변수 + 재배포**
+`MCP_SHARED_SECRET` 환경변수를 Render에 추가 등록하고 재배포한다.
+
+**10.7 Claude.ai 커넥터 연결 + 검증**
+Claude.ai(무료 플랜 기준 커스텀 커넥터 1개 가능)에서 이 MCP 서버를 연결한다. 10.2와
+같은 질문들로 실제 Claude.ai 대화창에서도 도구 호출이 일어나는지 확인한다.
+
+**10.8 README 업데이트**
+README에 Function Calling 흐름 + MCP 연동 방법을 정리한다(미션 요구사항: "어떤 근거로
+어떤 도구를 호출했는지"와 호출 흐름 — 간단 다이어그램 또는 단계).
 
 ---
 
