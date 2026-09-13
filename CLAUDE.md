@@ -7,6 +7,12 @@
 - 저장소: backend/ FastAPI·Firestore·OpenAI, frontend/ 바닐라 HTML/CSS/JS.
 - 선택 보너스: 인사이트·UX 고도화. Function Calling·MCP는 제거했으며 다시 추가하지 않는다.
 - summary는 요청당 전체 거래 1회 조회, 같은 데이터로 기본·월별·추가 지표 계산. 캐싱 없음.
+  예외(2026-09-13): Firestore 무료 읽기 할당량(5만 read/일) 소진으로 서비스 장애 발생
+  (Render 로그 429 ResourceExhausted, Firebase 콘솔 읽기 100% 사용 확인). 대응으로
+  backend/services/firestore_service.py의 fetch_all_data()에 TTL 2분 서버 메모리 캐싱을
+  도입했고, add/update/delete_data 시 즉시 무효화한다. list_conversations()도 전체 스캔
+  대신 updated_at 내림차순 최근 20건 상한으로 바꿨다. 트레이드오프: CUD 무효화로 대부분
+  가려지지만, TTL 내 외부 변경(예: DB 직접 수정)은 최대 2분간 반영이 늦을 수 있다.
 - Render Root=backend. Vercel Root=frontend, Other, node build.mjs, Output=dist.
 - 프론트 공개 API 주소는 Vercel API_BASE_URL에서 dist/js/config.js로 생성한다.
   로컬 직접 실행에는 frontend/js/config.js 사용. 프론트에 비밀키를 넣지 않는다.

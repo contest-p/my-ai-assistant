@@ -181,6 +181,12 @@
       }
       convoList.innerHTML = '';
       res.items.forEach((item) => convoList.appendChild(renderConvoCard(item)));
+      if (res.has_more) {
+        const notice = document.createElement('p');
+        notice.className = 'sub';
+        notice.textContent = '최근 20개 대화만 표시돼요.';
+        convoList.appendChild(notice);
+      }
     } catch (err) {
       convoList.innerHTML = '<p class="sub">' + escapeHtml(err.message) + '</p>';
     }

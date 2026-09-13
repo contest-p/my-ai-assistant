@@ -23,7 +23,7 @@ def create_conversation(payload: ConversationCreate):
 
 @router.get("")
 def list_conversations():
-    conversations = firestore_service.list_conversations()
+    conversations, has_more = firestore_service.list_conversations()
     conversations.sort(key=lambda c: c.get("updated_at"), reverse=True)
     items = [
         {
@@ -35,7 +35,9 @@ def list_conversations():
         }
         for c in conversations
     ]
-    return {"count": len(items), "items": items}
+    # count: 전체 대화 수가 아니라 "이번 응답에 실제로 포함된 항목 수"다. 2026-09-13
+    # list_conversations()에 상한(20)이 생기면서 전체 수와 달라질 수 있어 has_more로 보완한다.
+    return {"count": len(items), "items": items, "has_more": has_more}
 
 
 @router.get("/{conversation_id}")

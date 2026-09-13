@@ -1,3 +1,5 @@
+import time
+
 from firebase_admin import firestore
 from google.cloud.firestore_v1.base_query import FieldFilter
 
@@ -8,6 +10,21 @@ CONVERSATIONS_COLLECTION = "conversations"
 
 # Firestore batch write 1건당 최대 500 operation 제한 (2.4)
 BATCH_SIZE = 500
+
+# 2026-09-13: summary 조회(GET /api/data/summary)와 채팅(POST /api/chat)이 매 요청마다
+# fetch_all_data()로 `data` 컬렉션 전체를 캐싱 없이 재조회하다가 Firestore 무료 읽기
+# 할당량(5만 read/일)을 소진해 "서버에 연결할 수 없어요" 장애가 발생했다(Render 로그
+# 429 ResourceExhausted, Firebase 콘솔 읽기 100% 확인). TTL 캐싱으로 반복 조회를 흡수하되
+# add/update/delete_data 시 즉시 무효화해 최신성을 지킨다. TTL 2분은 연속된 채팅
+# 메시지·탭 전환처럼 짧은 시간 내 반복되는 재조회를 흡수하기에 충분하면서도, CUD 무효화가
+# 실제 변경을 즉시 반영하므로 체감 최신성 저하는 크지 않다는 판단이다.
+DATA_CACHE_TTL_SECONDS = 120
+_data_cache: dict = {"records": None, "expires_at": 0.0}
+
+
+def _invalidate_data_cache() -> None:
+    _data_cache["records"] = None
+    _data_cache["expires_at"] = 0.0
 
 
 def _doc_to_record(snapshot) -> dict:
@@ -35,13 +52,23 @@ def batch_add_data(records: list[dict]) -> int:
             batch.set(doc_ref, {**record, "created_at": firestore.SERVER_TIMESTAMP})
         batch.commit()
         added += len(chunk)
+    _invalidate_data_cache()
     return added
 
 
 def fetch_all_data() -> list[dict]:
-    """`data` 컬렉션 전체를 매번 다시 읽는다 (summary 계산 전용, 3.6 주의사항 —
-    페이지네이션된 목록을 재사용하지 않는다)."""
-    return [_doc_to_record(d) for d in db.collection(DATA_COLLECTION).stream()]
+    """`data` 컬렉션 전체를 읽는다 (summary 계산 전용, 3.6 주의사항 — 페이지네이션된
+    목록을 재사용하지 않는다). TTL 캐싱으로 반복 조회 시 Firestore read를 절약하고,
+    add/update/delete_data가 호출되면 즉시 무효화한다."""
+    now = time.monotonic()
+    if _data_cache["records"] is not None and now < _data_cache["expires_at"]:
+        print(f"[cache] fetch_all_data HIT ({len(_data_cache['records'])}건, 만료까지 {_data_cache['expires_at'] - now:.0f}s)")
+        return _data_cache["records"]
+    records = [_doc_to_record(d) for d in db.collection(DATA_COLLECTION).stream()]
+    _data_cache["records"] = records
+    _data_cache["expires_at"] = now + DATA_CACHE_TTL_SECONDS
+    print(f"[cache] fetch_all_data MISS - Firestore 재조회 ({len(records)}건)")
+    return records
 
 
 def query_data(start_date: str | None = None, end_date: str | None = None) -> list[dict]:
@@ -57,6 +84,7 @@ def query_data(start_date: str | None = None, end_date: str | None = None) -> li
 def add_data(record: dict) -> dict:
     doc_ref = db.collection(DATA_COLLECTION).document()
     doc_ref.set({**record, "created_at": firestore.SERVER_TIMESTAMP})
+    _invalidate_data_cache()
     return _doc_to_record(doc_ref.get())
 
 
@@ -67,6 +95,7 @@ def update_data(doc_id: str, fields: dict) -> dict | None:
         return None
     if fields:
         doc_ref.update(fields)
+    _invalidate_data_cache()
     return _doc_to_record(doc_ref.get())
 
 
@@ -75,6 +104,7 @@ def delete_data(doc_id: str) -> bool:
     if not doc_ref.get().exists:
         return False
     doc_ref.delete()
+    _invalidate_data_cache()
     return True
 
 
@@ -113,9 +143,23 @@ def append_messages(doc_id: str, messages: list[dict]) -> None:
     )
 
 
-def list_conversations() -> list[dict]:
-    """메타 정렬용으로 전체 문서를 읽는다 (updated_at DESC는 호출부에서 정렬)."""
-    return [_doc_to_record(d) for d in db.collection(CONVERSATIONS_COLLECTION).stream()]
+CONVERSATIONS_LIST_LIMIT = 20
+
+
+def list_conversations() -> tuple[list[dict], bool]:
+    """최근 대화 최대 CONVERSATIONS_LIST_LIMIT건과 '더 있음(has_more)' 여부를 함께
+    반환한다 (updated_at DESC, 호출부 정렬은 그대로 둬 응답 형식을 바꾸지 않는다).
+    2026-09-13: 대화 수가 늘어날수록 매 요청 전체 스캔이 Firestore 할당량을 위협해
+    상한을 두었다. has_more 판별을 위해 상한보다 1건 더 조회(추가 read 1건)하고
+    초과분은 잘라낸다."""
+    query = (
+        db.collection(CONVERSATIONS_COLLECTION)
+        .order_by("updated_at", direction=firestore.Query.DESCENDING)
+        .limit(CONVERSATIONS_LIST_LIMIT + 1)
+    )
+    records = [_doc_to_record(d) for d in query.stream()]
+    has_more = len(records) > CONVERSATIONS_LIST_LIMIT
+    return records[:CONVERSATIONS_LIST_LIMIT], has_more
 
 
 def get_conversation(doc_id: str) -> dict | None:
