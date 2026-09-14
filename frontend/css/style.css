@@ -800,7 +800,10 @@ button, input, select { font-family: inherit; font-size: inherit; }
 .app-tools { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:24px; color:var(--muted); font-size:12px; }
 .app-tools .btn { padding:6px 12px; }
 .insight-toolbar { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px; font-size:13px; }
-.insight-toolbar select { padding:8px 12px; background:var(--control); color:var(--ink); border:1px solid var(--line); border-radius:var(--radius-s); }
+.insight-toolbar select, #summaryMonthSelect { padding:8px 12px; background:var(--control); color:var(--ink); border:1px solid var(--line); border-radius:var(--radius-s); }
+.summary-month-heading { display:flex; align-items:center; flex-wrap:wrap; gap:12px; }
+#summaryMonthSelect:focus-visible { outline:2px solid var(--khaki); outline-offset:2px; }
+#summaryMonthSelect:disabled { opacity:.65; }
 .export-actions { display:flex; flex-wrap:wrap; gap:8px; margin-left:auto; }
 #insightStatus { min-height:24px; margin-bottom:14px; }
 .insight-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:14px; margin-bottom:18px; }

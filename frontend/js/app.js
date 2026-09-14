@@ -235,9 +235,23 @@
   /* ---------- 5. 데이터 요약 (8.6) ---------- */
 
   let summaryPending = false;
+  let summaryMonths = [];
+  const summaryMonthSelect = document.getElementById('summaryMonthSelect');
+  function renderSummaryMonth() {
+    const month = summaryMonths.find(row => row.month === summaryMonthSelect.value);
+    document.getElementById('summaryMonthIncome').textContent = wonPlain(month?.income ?? 0);
+    document.getElementById('summaryMonthExpense').textContent = wonPlain(month?.expense ?? 0);
+    const net = month?.net ?? 0;
+    const netEl = document.getElementById('summaryMonthNet');
+    netEl.textContent = won(net);
+    netEl.className = 'amt net ' + (net >= 0 ? 'positive' : 'negative');
+  }
+  summaryMonthSelect.addEventListener('change', renderSummaryMonth);
   async function loadSummary() {
     if (summaryPending) return;
     summaryPending = true;
+    const selectedMonth = summaryMonthSelect.value;
+    summaryMonthSelect.disabled = true;
     Insights.loading();
     document.getElementById("refreshSummary").disabled = true;
     document.querySelectorAll("#view-summary .value, #summaryNet, #summaryCount, #summaryIncome, #summaryExpense, #summaryMonthIncome, #summaryMonthExpense, #summaryMonthNet").forEach(el => { el.textContent = "—"; });
@@ -262,13 +276,13 @@
       document.getElementById('summaryMax').textContent = won(m.max_transaction);
       document.getElementById('summaryMin').textContent = won(m.min_transaction);
 
-      const cm = s.current_month || {};
-      document.getElementById('summaryMonthTitle').textContent = cm.month ? '이번 달 · ' + cm.month : '이번 달';
-      document.getElementById('summaryMonthIncome').textContent = wonPlain(cm.income);
-      document.getElementById('summaryMonthExpense').textContent = wonPlain(cm.expense);
-      const monthNetEl = document.getElementById('summaryMonthNet');
-      monthNetEl.textContent = won(cm.net);
-      monthNetEl.className = 'amt net ' + (cm.net >= 0 ? 'positive' : 'negative');
+      summaryMonths = [...(s.monthly || [])].sort((a, b) => b.month.localeCompare(a.month));
+      summaryMonthSelect.replaceChildren(...(summaryMonths.length
+        ? summaryMonths.map(row => new Option(row.month, row.month))
+        : [new Option('거래 데이터 없음', '')]));
+      if (summaryMonths.some(row => row.month === selectedMonth)) summaryMonthSelect.value = selectedMonth;
+      summaryMonthSelect.disabled = !summaryMonths.length;
+      renderSummaryMonth();
 
       const trendEl = document.getElementById('summaryTrend');
       trendEl.textContent = s.trend || '추세 정보 없음';
@@ -276,6 +290,8 @@
       if (s.trend && s.trend.includes('증가')) trendEl.classList.add('up');
       else if (s.trend && s.trend.includes('감소')) trendEl.classList.add('down');
     } catch (err) {
+      summaryMonths = [];
+      summaryMonthSelect.replaceChildren(new Option('요약을 다시 불러와 주세요', ''));
       document.getElementById('summaryPeriod').textContent = '요약을 불러오지 못했어요';
       Insights.error(err.message);
     } finally {
