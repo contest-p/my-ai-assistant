@@ -574,7 +574,12 @@ button, input, select { font-family: inherit; font-size: inherit; }
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 15px;
+  overflow-wrap: anywhere;
 }
+
+.convo-actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-wrap: wrap; }
+.convo-delete { padding: 6px 10px; font-size: 12px; flex-shrink: 0; }
+.convo-card .row1 { gap: 10px; }
 
 .convo-card .meta {
   font-size: 12px;

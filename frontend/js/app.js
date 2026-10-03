@@ -101,6 +101,7 @@
   const typingMsg = document.getElementById('typingMsg');
   let conversationId = null;
   let chatPending = false;
+  const deletingConversations = new Set();
 
   function appendMessage(role, html, isError) {
     const wrap = document.createElement('div');
@@ -119,7 +120,7 @@
 
   async function sendMessage() {
     const text = chatInput.value.trim();
-    if (!text || chatPending) return;
+    if (!text || chatPending || deletingConversations.has(conversationId)) return;
     chatPending = true;
     document.getElementById("btnNewChat").disabled = true;
     appendMessage('user', escapeHtml(text));
@@ -155,11 +156,14 @@
   document.getElementById('btnNewChat').addEventListener('click', () => {
     conversationId = null;
     clearChat();
+    btnSend.disabled = chatPending;
   });
 
   function openConversationInChat(conversation) {
     if (chatPending) { showToast("답변이 끝난 뒤 대화를 바꿔 주세요."); return; }
+    if (deletingConversations.has(conversation.id)) { showToast('삭제 중인 대화예요. 잠시 기다려 주세요.'); return; }
     conversationId = conversation.id;
+    btnSend.disabled = false;
     clearChat();
     (conversation.messages || []).forEach((m) => {
       appendMessage(m.role === 'user' ? 'user' : 'ai', escapeHtml(m.content).replace(/\n/g, '<br>'));
@@ -170,6 +174,41 @@
   /* ---------- 4. 대화 기록 (8.5) ---------- */
 
   const convoList = document.getElementById('convoList');
+
+  async function deleteConversation(item, button) {
+    if (deletingConversations.has(item.id)) return;
+    if (chatPending && conversationId === item.id) {
+      showToast('답변이 끝난 뒤 이 대화를 삭제해 주세요.');
+      return;
+    }
+    if (!confirm('이 대화를 삭제할까요? 삭제한 대화는 복구할 수 없어요.\n' + item.title)) return;
+    deletingConversations.add(item.id);
+    button.disabled = true;
+    button.textContent = '삭제 중…';
+    if (conversationId === item.id) btnSend.disabled = true;
+    try {
+      try {
+        await Api.deleteJSON('/api/conversations/' + encodeURIComponent(item.id));
+      } catch (err) {
+        // 다른 화면에서 이미 삭제된 경우에도 목록과 현재 채팅을 정리한다.
+        if (!(err instanceof Api.ApiError && err.status === 404)) throw err;
+      }
+      if (conversationId === item.id) {
+        conversationId = null;
+        clearChat();
+        chatInput.value = '';
+      }
+      showToast('대화를 삭제했어요.');
+      await loadConversations();
+    } catch (err) {
+      showToast(err.message);
+    } finally {
+      deletingConversations.delete(item.id);
+      button.disabled = false;
+      button.textContent = '삭제';
+      btnSend.disabled = chatPending || deletingConversations.has(conversationId);
+    }
+  }
 
   async function loadConversations() {
     convoList.innerHTML = '<p class="sub">불러오는 중…</p>';
@@ -199,12 +238,22 @@
     card.innerHTML =
       '<div class="row1">' +
       '<span class="title">' + escapeHtml(item.title) + '</span>' +
-      '<span class="meta">' + fmtDate(item.updated_at) + ' · ' + item.message_count + '개 메시지 <span class="chevron">▸</span></span>' +
+      '<div class="convo-actions"><span class="meta">' + fmtDate(item.updated_at) + ' · ' + item.message_count + '개 메시지 <span class="chevron">▸</span></span>' +
+      '<button type="button" class="btn secondary convo-delete">삭제</button></div>' +
       '</div>' +
       '<div class="preview">눌러서 전체 대화를 확인하세요</div>' +
       '<div class="convo-detail"></div>';
 
+    const deleteButton = card.querySelector('.convo-delete');
+    deleteButton.setAttribute('aria-label', item.title + ' 대화 삭제');
+    deleteButton.disabled = deletingConversations.has(item.id);
+    deleteButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteConversation(item, deleteButton);
+    });
+
     card.addEventListener('click', async () => {
+      if (deletingConversations.has(item.id)) return;
       const wasOpen = card.classList.contains('open');
       card.classList.toggle('open');
       if (wasOpen) return;
