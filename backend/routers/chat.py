@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException
 
 from models.schemas import ChatRequest
-from services import analysis_service, firestore_service, openai_service
+from services import analysis_service, firestore_service, openai_service, transaction_context
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -27,9 +27,11 @@ def chat(payload: ChatRequest):
             raise HTTPException(status_code=404, detail="대화를 찾을 수 없습니다.")
         existing_messages = conversation.get("messages", [])
 
-    # 캐싱 금지 — 매 요청마다 analysis_service.get_summary()를 그대로 재사용한다 (Task 6.3-3)
-    summary = analysis_service.get_summary()
-    system_prompt = openai_service.build_system_prompt(summary)
+    # 전체 거래를 한 번만 읽고 같은 스냅샷에서 요약·개별 거래 근거를 만든다.
+    records = firestore_service.fetch_all_data()
+    summary = analysis_service.build_summary(records)
+    evidence = transaction_context.build_transaction_context(records)
+    system_prompt = openai_service.build_system_prompt(summary, evidence)
 
     try:
         reply = openai_service.ask(system_prompt, existing_messages, payload.message)
