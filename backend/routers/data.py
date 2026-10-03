@@ -3,7 +3,7 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException, Query, Response
 
 from models.schemas import DataCreate, DataUpdate
-from services import analysis_service, export_service, firestore_service
+from services import analysis_service, export_service, firestore_service, quick_lookup
 
 router = APIRouter(prefix="/api/data", tags=["data"])
 
@@ -35,6 +35,16 @@ def list_data(
 @router.get("/summary")
 def get_summary():
     return analysis_service.get_summary()
+
+
+@router.get("/quick-answer")
+def quick_answer(
+    kind: Literal["summary", "largest", "expenses", "income"] = "summary",
+    month: str = Query(default="all", pattern=r"^(all|\d{4}-(0[1-9]|1[0-2]))$"),
+    offset: int = Query(default=0, ge=0),
+):
+    records = firestore_service.fetch_all_data()
+    return quick_lookup.build_quick_answer(records, kind, month, offset)
 
 
 @router.get("/export")

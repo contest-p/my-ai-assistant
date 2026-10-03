@@ -447,6 +447,29 @@ button, input, select { font-family: inherit; font-size: inherit; }
 
 /* ---------- chat view ---------- */
 
+.quick-panel { width: 100%; max-width: 650px; padding: 18px; border: 1px solid var(--line); border-radius: var(--radius-m); background: var(--paper); }
+.quick-panel summary { cursor: pointer; font-weight: 600; }
+.quick-panel summary span { font-size: 12px; color: var(--muted); margin-left: 8px; font-weight: 400; }
+.quick-toolbar { display: flex; align-items: center; gap: 10px; margin: 16px 0 12px; font-size: 13px; }
+.quick-toolbar select { padding: 7px 10px; background: var(--control); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius-s); }
+.quick-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.quick-grid button { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px 10px; background: var(--paper-card); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; cursor: pointer; font-family: inherit; }
+.quick-grid button > span { font-size: 25px; color: var(--khaki-deep); line-height: 1; }
+.quick-grid button strong { font-size: 13px; line-height: 1.5; }
+.quick-grid button:hover, .quick-grid button[aria-pressed="true"] { border-color: var(--khaki); background: var(--khaki-soft); }
+.quick-status, .quick-note { font-size: 12px; margin: 12px 0 0; }
+.quick-result { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 14px; font-size: 13px; overflow-wrap: anywhere; }
+.quick-result h3 { font-size: 14px; margin: 0 0 12px; }
+.quick-totals { margin: 0; }
+.quick-totals > div { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; }
+.quick-totals dd { margin: 0; font-weight: 600; }
+.quick-records { margin: 0; padding-left: 22px; }
+.quick-records li { padding: 8px 0; border-bottom: 1px solid var(--line); }
+.quick-records li > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; }
+.quick-date, .quick-category { font-size: 12px; color: var(--muted); }
+.quick-amount { display: block; margin-top: 4px; font-weight: 600; }
+.quick-pages { display: flex; gap: 8px; margin-top: 12px; }
+
 .chat-shell {
   background: var(--paper-card);
   border: 1px solid var(--line);

@@ -82,7 +82,7 @@
       <div class="view-header">
         <div>
           <h2>AI 채팅</h2>
-          <p class="sub">저장된 데이터 요약을 바탕으로 답변합니다 · 매 질문마다 최신 데이터를 다시 반영해요</p>
+          <p class="sub">금액·내역은 빠른 조회로, 소비 패턴 분석·조언은 직접 질문해 주세요</p>
         </div>
         <button class="btn secondary" id="btnNewChat">+ 새 대화</button>
       </div>
@@ -90,13 +90,26 @@
       <div class="chat-shell">
         <div class="chat-context" id="chatContext" role="status">데이터 요약을 불러오는 중…</div>
         <div class="chat-log" id="chatLog" role="log" aria-live="polite">
+          <details class="quick-panel" open>
+            <summary>무엇을 확인할까요? <span>빠른 조회</span></summary>
+            <div class="quick-toolbar"><label for="quickMonth">조회 기간</label><select id="quickMonth"><option value="all">전체 기간</option></select></div>
+            <div class="quick-grid">
+              <button type="button" data-quick="summary"><span aria-hidden="true">↗</span><strong>얼마 들어오고<br>나갔어?</strong></button>
+              <button type="button" data-quick="largest"><span aria-hidden="true">↓</span><strong>가장 큰 출금<br>5건 보기</strong></button>
+              <button type="button" data-quick="expenses"><span aria-hidden="true">−</span><strong>출금 내역<br>확인하기</strong></button>
+              <button type="button" data-quick="income"><span aria-hidden="true">＋</span><strong>입금 내역<br>확인하기</strong></button>
+            </div>
+            <p class="quick-status sub" id="quickStatus" role="status">기간과 항목을 선택하면 기록에서 바로 확인해 드려요.</p>
+            <div id="quickResult" class="quick-result" hidden></div>
+            <p class="sub quick-note">출금에는 계좌 이동·저축이 포함될 수 있어요. 패턴 분석·조언은 아래에 직접 질문해 주세요.</p>
+          </details>
           <div class="msg ai" id="typingMsg" style="display:none;">
             <div class="bubble typing-bubble"><span></span><span></span><span></span></div>
           </div>
         </div>
 
         <div class="chat-input-row">
-          <input type="text" aria-label="AI에게 질문" placeholder="예: 월별 지출 흐름을 알려줘" id="chatInput">
+          <input type="text" aria-label="AI에게 질문" placeholder="예: 내 소비 패턴을 분석하고 조언해줘" id="chatInput">
           <button class="btn" id="btnSend">전송</button>
         </div>
       </div>
@@ -261,6 +274,7 @@
 <script src="js/config.js"></script>
 <script src="js/api.js"></script>
 <script src="js/insights.js"></script>
+<script src="js/quick.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

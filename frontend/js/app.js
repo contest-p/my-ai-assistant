@@ -351,6 +351,7 @@
 
   document.getElementById('refreshSummary').addEventListener('click', loadSummary);
   function updateChatContext(s) {
+    QuickLookup.setMonths((s.monthly || []).map(row => row.month));
     document.getElementById('chatContext').textContent = s.count
       ? `${s.period} · ${s.count.toLocaleString()}건 · 총 지출 ${wonPlain(s.metrics.total_expense)}`
       : '아직 거래가 없어요. 거래 내역에서 기록을 추가해 주세요.';
