@@ -82,6 +82,7 @@
   const views = document.querySelectorAll('.view');
 
   function switchView(viewName) {
+    if (viewName !== 'chat') QuestionGuide.close(false);
     views.forEach((v) => v.classList.toggle('active', v.id === 'view-' + viewName));
     navButtons.forEach((b) => b.classList.toggle('active', b.dataset.view === viewName));
     if (viewName === 'summary') loadSummary();

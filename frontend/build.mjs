@@ -12,4 +12,5 @@ await mkdir('dist/js', { recursive: true });
 await cp('index.html', 'dist/index.html');
 await cp('css', 'dist/css', { recursive: true });
 await cp('js', 'dist/js', { recursive: true });
+await cp('assets', 'dist/assets', { recursive: true });
 await writeFile('dist/js/config.js', `const API_BASE_URL = ${JSON.stringify(raw.replace(/\/+$/, ''))};\n`);
