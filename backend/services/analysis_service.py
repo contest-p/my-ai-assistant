@@ -99,7 +99,7 @@ def build_insights(records: list[dict]) -> dict:
 
 
 def get_summary() -> dict:
-    """`data` 컬렉션 전체를 매번 다시 읽어서 계산한다 (페이지네이션된 목록 재사용 금지)."""
+    """공유 캐시의 전체 거래로 계산한다 (페이지네이션된 목록 재사용 금지)."""
     return build_summary(fetch_all_data())
 
 

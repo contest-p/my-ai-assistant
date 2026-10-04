@@ -11,6 +11,14 @@
 
 ## 전체 체크리스트
 
+### 2026-10-04 Firestore 읽기 절감
+- [x] 구현: TTL 1시간 공용 거래 캐시, 조회·CRUD 공통 잠금, 응답 복사, SDK 전체 조회 재시도 제거, 오류 60초 대기 및 503 안내.
+- [x] 로컬 검증: 합성 1,116건·가짜 DB/AI로 100회 혼합 요청 전체 스캔 1회, 동시 32회, 만료, CRUD/조회 경합, 오류·복구, 기존 채팅 계약 확인. 재현: `python backend/scripts/check_transaction_cache.py` (프로젝트 의존성 설치 환경).
+- [ ] 배포 검증: 초기 요청은 로컬 검증까지, 후속 요청으로 커밋·푸시 승인. 실제 인스턴스/프로세스 수와 운영 동작 미검증.
+- 시작 시 HEAD `11ca626`, git diff/status는 비어 있었음. 아래 과거의 “미커밋”·“캐시 제거”는 당시 기록이며 현재 상태가 아님. AUDIT.md도 과거 기록으로 보존.
+- 현재 캐시 계약·상세 결과: [CACHE_VALIDATION.md](CACHE_VALIDATION.md).
+
+
 ### 2026-10-03 선택형 빠른 조회
 - [x] 구현: 채팅 안 기간 선택·4개 카드, /api/data/quick-answer에서 입출금 요약·큰 출금 5건·입출금 내역(20건 페이지) 계산. 요청당 조회 1회, AI 호출·대화 저장 없음. 직접 입력 분석·조언 채팅 유지.
 - [x] 로컬 검증: 합성 데이터로 합계·순위·페이지·분류/null·빈 월/데이터·조회 1회 및 Python 구문 확인. 가짜 API Chrome 브라우저로 최신월 기본 선택·4개 카드·월 전환·페이지·문자 이스케이프·빈 결과·실패/재시도·요청 중 비활성화·빠른 조회 AI 호출 0회·직접 AI 채팅·새 대화·모바일 390px/다크 모드 가로 넘침 없음·JS 오류 0건 확인.
@@ -275,9 +283,8 @@ PRD 10번 참고. 쿼리파라미터 `limit`(기본 50) / `offset`(기본 0) / `
 
 **3.6 `GET /api/data/summary`**
 PRD 13번 응답 구조 그대로 구현. `analysis_service.py`에 계산 로직 분리.
-**주의: `GET /api/data`의 페이지네이션된 목록을 재사용하지 말고, `data` 컬렉션 전체를
-매번 다시 읽어서 계산한다** (1,116건 규모에서는 전체 스캔 비용이 크지 않음. limit/offset
-이 걸린 일부 데이터로 summary를 계산하면 통계가 틀어진다).
+**주의: 페이지네이션 전 전체 거래의 공유 캐시로 계산한다.** TTL 1시간, CRUD 후 무효화.
+limit/offset이 걸린 일부 데이터로 summary를 계산하면 통계가 틀어진다.
 - `total_income` = value>0 합계, `total_expense` = value<0 절댓값 합계, `net` = 차이
 - `income_count`, `expense_count`
 - `average_income` = total_income/income_count, `average_expense` = total_expense/expense_count
@@ -393,7 +400,7 @@ PRD 19~21번 참고.
 1. `conversation_id`가 없으면: 새 대화 생성 준비
 2. 있으면: Firestore에서 해당 문서 조회 → **없으면 즉시 HTTP 404** ("대화를 찾을 수
    없습니다", PRD 20번 예외 규칙 — 조용히 새 대화로 대체하지 않는다)
-3. `analysis_service.get_summary()`를 직접 호출해 최신 summary 재계산(캐싱 금지, 매
+3. `analysis_service.get_summary()`를 직접 호출해 공유 전체 거래 캐시로 summary 재계산(매
    요청마다) — 자기 자신의 `/api/data/summary` URL로 내부 HTTP 요청을 보내는 방식이
    아니라, 3.6에서 만든 함수를 그대로 import해서 쓴다.
 4. 시스템 프롬프트 조립 → 기존 메시지 있으면 대화 이력 포함해서 GPT 호출

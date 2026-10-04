@@ -22,3 +22,6 @@ mcp_test.json
 
 # OS / 에디터
 .DS_Store
+
+# Local isolated verification dependencies
+.local-validation/

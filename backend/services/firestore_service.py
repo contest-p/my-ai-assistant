@@ -1,5 +1,7 @@
 from firebase_admin import firestore
-from google.cloud.firestore_v1.base_query import FieldFilter
+from google.api_core.exceptions import ResourceExhausted
+
+from services.transaction_cache import TransactionCache
 
 from config import db
 
@@ -8,6 +10,8 @@ CONVERSATIONS_COLLECTION = "conversations"
 
 # Firestore batch write 1건당 최대 500 operation 제한 (2.4)
 BATCH_SIZE = 500
+
+_transaction_cache = TransactionCache()
 
 def _doc_to_record(snapshot) -> dict:
     record = snapshot.to_dict()
@@ -23,57 +27,62 @@ def data_collection_has_documents() -> bool:
 
 
 def batch_add_data(records: list[dict]) -> int:
-    """records: date/value/memo/category 키를 가진 dict 리스트.
-    500건씩 나눠 batch commit하고, 적재된 문서 수를 반환한다."""
-    added = 0
-    for start in range(0, len(records), BATCH_SIZE):
-        chunk = records[start : start + BATCH_SIZE]
-        batch = db.batch()
-        for record in chunk:
-            doc_ref = db.collection(DATA_COLLECTION).document()
-            batch.set(doc_ref, {**record, "created_at": firestore.SERVER_TIMESTAMP})
-        batch.commit()
-        added += len(chunk)
-    return added
+    """500건씩 batch commit한다. 별도 프로세스의 캐시는 무효화하지 못한다."""
+    with _transaction_cache.mutation():
+        added = 0
+        for start in range(0, len(records), BATCH_SIZE):
+            chunk = records[start : start + BATCH_SIZE]
+            batch = db.batch()
+            for record in chunk:
+                doc_ref = db.collection(DATA_COLLECTION).document()
+                batch.set(doc_ref, {**record, "created_at": firestore.SERVER_TIMESTAMP})
+            batch.commit()
+            added += len(chunk)
+        return added
 
 
 def fetch_all_data() -> list[dict]:
-    """요청마다 전체 거래를 한 번 읽는다. 요청 사이에 캐싱하지 않는다."""
-    return [_doc_to_record(d) for d in db.collection(DATA_COLLECTION).stream()]
+    """All transaction consumers share a one-hour process-local snapshot."""
+    def load():
+        # Disable SDK retries, including stream retries, on quota/DB failure.
+        return [_doc_to_record(d) for d in
+                db.collection(DATA_COLLECTION).stream(retry=None, timeout=15)]
+
+    return _transaction_cache.get(load, lambda exc: isinstance(exc, ResourceExhausted))
 
 
 def query_data(start_date: str | None = None, end_date: str | None = None) -> list[dict]:
-    """date 범위(양 끝 포함)로 필터링한 거래 목록. 정렬/페이지네이션은 호출부(router)에서 처리한다."""
-    query = db.collection(DATA_COLLECTION)
-    if start_date:
-        query = query.where(filter=FieldFilter("date", ">=", start_date))
-    if end_date:
-        query = query.where(filter=FieldFilter("date", "<=", end_date))
-    return [_doc_to_record(d) for d in query.stream()]
+    """Inclusive range filtering over the shared full snapshot."""
+    return [r for r in fetch_all_data()
+            if (not start_date or r["date"] >= start_date)
+            and (not end_date or r["date"] <= end_date)]
 
 
 def add_data(record: dict) -> dict:
-    doc_ref = db.collection(DATA_COLLECTION).document()
-    doc_ref.set({**record, "created_at": firestore.SERVER_TIMESTAMP})
-    return _doc_to_record(doc_ref.get())
+    with _transaction_cache.mutation():
+        doc_ref = db.collection(DATA_COLLECTION).document()
+        doc_ref.set({**record, "created_at": firestore.SERVER_TIMESTAMP})
+        return _doc_to_record(doc_ref.get())
 
 
 def update_data(doc_id: str, fields: dict) -> dict | None:
-    """존재하지 않으면 None. 부분 수정만 반영(PUT이지만 PATCH처럼 동작, PRD 11번)."""
-    doc_ref = db.collection(DATA_COLLECTION).document(doc_id)
-    if not doc_ref.get().exists:
-        return None
-    if fields:
-        doc_ref.update(fields)
-    return _doc_to_record(doc_ref.get())
+    """존재하지 않으면 None. 부분 수정만 반영한다."""
+    with _transaction_cache.mutation():
+        doc_ref = db.collection(DATA_COLLECTION).document(doc_id)
+        if not doc_ref.get().exists:
+            return None
+        if fields:
+            doc_ref.update(fields)
+        return _doc_to_record(doc_ref.get())
 
 
 def delete_data(doc_id: str) -> bool:
-    doc_ref = db.collection(DATA_COLLECTION).document(doc_id)
-    if not doc_ref.get().exists:
-        return False
-    doc_ref.delete()
-    return True
+    with _transaction_cache.mutation():
+        doc_ref = db.collection(DATA_COLLECTION).document(doc_id)
+        if not doc_ref.get().exists:
+            return False
+        doc_ref.delete()
+        return True
 
 
 TITLE_MAX_LENGTH = 30
